@@ -1,4 +1,9 @@
 #include <cmath>
+#include <cstdlib>
+#include <iostream>
+#include <string>
+
+using namespace std;
 
 #define PI 3.14159265358979323846
 
@@ -11,7 +16,7 @@ class Sphere {
 
 
 	// Constructor
-	Sphere(float radius, float centerX, float centerY, float centerZ, int hseg, int vseg) {
+	Sphere(float centerX, float centerY, float centerZ, float radius, int hseg, int vseg) {
 
 		this->radius = radius;
 		this->centerX = centerX;
@@ -22,8 +27,8 @@ class Sphere {
 
 		this->phi = 0.0f;
 		this->theta = 0.0f;
-		this->dphi = 0.0f;
-		this->dtheta = 0.0f;		
+		this->dphi = 2*PI/(vseg-1);
+		this->dtheta = PI/(hseg-1);
 
 	}
 
@@ -35,28 +40,21 @@ class Sphere {
 		dphi = PI / (hseg - 1);
 
 
-		float x[hseg*vseg];
-		float y[hseg*vseg];
-		float z[hseg*vseg];
-
+		float *x = static_cast<float*>(std::malloc(vseg*hseg));
+		float *y = static_cast<float*>(std::malloc(vseg*hseg));
+		float *z = static_cast<float*>(std::malloc(vseg*hseg));
 
 		for(i=0; i<hseg; i++) {
 
+			theta += dtheta;
+
 			for(j=0;j<vseg;j++) {
 
+				phi += dphi;
 
 				x[i*j] = sin(phi) * cos(theta);
 				y[i*j] = sin(phi) * sin(theta);
 				z[i*j] = cos(phi);
-				
-				x[i*j+1] = x+sin(phi) * cos(theta);
-				y[i*j+1] = y+sin(phi) * cos(theta);
-				z[i*j+1] = z+cos(phi);
-
-				x[i*j+2] = x+sin(phi) * cos(theta);
-				y[i*j+2] = y+sin(phi) * cos(theta);
-				z[i*j+2] = z+cos(phi);
-
 
 			}
 
