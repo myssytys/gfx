@@ -7,7 +7,9 @@ using namespace std;
 
 class Tetra {
 
-	float cX, cY, cZ;	
+	float cX, cY, cZ;
+	float *vertex;
+	int *indices;	
 
 	// Constructor
 	Tetra(float cX, float cY, float cZ) {
@@ -17,20 +19,29 @@ class Tetra {
 		this->cY = cY;
 		this->cZ = cZ;
 
-	    float vertex[]={
+		vertex = (float*)malloc(12*3);
+		indices = (int*)malloc(12);
+
+	    vertex={
+
+			
 	
 		};
 
-	int indices[]={
-		 	};
-		
+	   indices={
+		 
+		    0, 1, 2,  // Face 0
+            0, 2, 3,  // Face 1
+            0, 3, 1,  // Face 2
+            1, 3, 2   // Face 3
+	};
 	
 	}
 	
 
 	~Tetra() {
-		delete[] vertex;
-		delete[] indices;
+		delete vertex;
+		delete indices;
 
 	}
 
