@@ -8,32 +8,37 @@ using namespace std;
 class Tetra {
 
 	float cX, cY, cZ;
+	float edge;
 	float *vertex;
 	int *indices;	
 
 	// Constructor
-	Tetra(float cX, float cY, float cZ) {
+	Tetra(float cX, float cY, float cZ, float edge) {
 
 		
 		this->cX = cX;
 		this->cY = cY;
 		this->cZ = cZ;
+		this->edge = edge;
 
 		vertex = (float*)malloc(12*3);
 		indices = (int*)malloc(12);
 
 	    vertex={
+			0.0f, edge, 0.0f,
+			edge/2.0, -edge/2.0, 0.0f, 
+			0.0f, 0.0f, edge,
+			-edge/2.0f, -edge/2.0f, 0.0f
+			};
 
-			
-	
-		};
-
+		
 	   indices={
 		 
 		    0, 1, 2,  // Face 0
             0, 2, 3,  // Face 1
             0, 3, 1,  // Face 2
             1, 3, 2   // Face 3
+	   }
 	};
 	
 	}
