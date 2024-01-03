@@ -9,10 +9,17 @@ using namespace std;
 
 class Sphere {
 
+	struct Vertex {
+		float x,y,z;
+		float r,g,b;
+		float nx,ny,nz;
+	};
 	float radius;
 	float centerX, centerY, centerZ;
 	float phi, theta, dtheta, dphi;
+	float *x,*y,*z;
 	int hseg, vseg;
+	Vertex* vertex;
 
 
 	// Constructor
@@ -30,6 +37,8 @@ class Sphere {
 		this->dphi = 2*PI/(vseg-1);
 		this->dtheta = PI/(hseg-1);
 
+		vertex = new Vertex[vseg*hseg];
+
 	}
 
 	void DrawSphere() {
@@ -38,11 +47,6 @@ class Sphere {
 
 		dtheta = 2.0 * PI / (vseg - 1);	
 		dphi = PI / (hseg - 1);
-
-
-		float *x = static_cast<float*>(std::malloc(vseg*hseg));
-		float *y = static_cast<float*>(std::malloc(vseg*hseg));
-		float *z = static_cast<float*>(std::malloc(vseg*hseg));
 
 		for(i=0; i<hseg; i++) {
 
@@ -67,6 +71,7 @@ class Sphere {
 
 
 	}
+
 
 
 	float getRadius() {
