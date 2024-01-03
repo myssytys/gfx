@@ -56,9 +56,9 @@ class Sphere {
 
 				phi += dphi;
 
-				x[i*j] = sin(phi) * cos(theta);
-				y[i*j] = sin(phi) * sin(theta);
-				z[i*j] = cos(phi);
+				vertex[i*j].x = sin(phi) * cos(theta);
+				vertex[i*j].y = sin(phi) * sin(theta);
+				vertex[i*j].z = cos(phi);
 
 			}
 
