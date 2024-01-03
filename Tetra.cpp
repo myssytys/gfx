@@ -7,9 +7,15 @@ using namespace std;
 
 class Tetra {
 
+	struct Vertex {
+		float x, y, z;
+		float r, g ,b;
+		float nx, ny, nz;
+	};
+
 	float cX, cY, cZ;
 	float edge;
-	float *vertex;
+	Vertex* vertex;
 	int *indices;	
 
 	// Constructor
@@ -21,12 +27,12 @@ class Tetra {
 		this->cZ = cZ;
 		this->edge = edge;
 
-		vertex = (float*)malloc(12*3);
+		vertex = new Vertex[12];
 		indices = (int*)malloc(12);
 
-	    vertex={
+	    vertex=new Vertex{
 			0.0f, edge, 0.0f,
-			edge/2.0, -edge/2.0, 0.0f, 
+			edge/2.0f, -edge/2.0f, 0.0f, 
 			0.0f, 0.0f, edge,
 			-edge/2.0f, -edge/2.0f, 0.0f
 			};
@@ -38,10 +44,10 @@ class Tetra {
             0, 2, 3,  // Face 1
             0, 3, 1,  // Face 2
             1, 3, 2   // Face 3
-	   }
-	};
+	   };
 	
-	}
+	
+}
 	
 
 	~Tetra() {
