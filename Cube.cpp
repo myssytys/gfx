@@ -63,8 +63,8 @@ class Cube {
 	}
 
 	~Cube() {
-		delete[] vertex;
-		delete[] indices;
+		//delete[] vertex;
+		//delete[] indices;
 
 	}
 
