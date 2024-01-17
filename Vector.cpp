@@ -30,7 +30,7 @@ float length(const Vector &a)
 
 Vector normalize(const Vector &a)
 {
-	const double lrcp = 1.0 / std::sqrt(dot(a, a));
+	const float lrcp = 1.0f / std::sqrt(dot(a, a));
 	return Vector(a.x * lrcp, a.y * lrcp, a.z * lrcp);
 }
 
