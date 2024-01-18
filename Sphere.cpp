@@ -24,7 +24,6 @@ class Sphere {
 	float radius;
 	float centerX, centerY, centerZ;
 	float phi, theta, dtheta, dphi;
-	float *x,*y,*z;
 	int hseg, vseg;
 	Vertex* vertex;
 	Vertex* icovertex;
@@ -104,40 +103,37 @@ class Sphere {
 	icovertex[10].x=-dv; icovertex[10].y=+du; icovertex[10].z=0.0f;
 	icovertex[11].x=-dv; icovertex[11].y=-du; icovertex[11].z=0.0f;
 
-    /*edges =
-    [
-      { n: [0, 1,
-      { n: [0, 4,
-      { n: [0, 5,
-      { n: [0, 8,
-      { n: [0, 10, 
-      { n: [1, 6, 
-      { n: [1, 7, 
-      { n: [1, 8, 
-      { n: [1, 10,
-      { n: [2, 3, 
-      { n: [2, 4, 
-      { n: [2, 5, 
-      { n: [2, 9, 
-      { n: [2, 11, 
-      { n: [3, 6, 
-      { n: [3, 7, 
-      { n: [3, 9, 
-      { n: [3, 11, 
-      { n: [4, 5, 
-      { n: [4, 8, 
-      { n: [4, 9, 
-      { n: [5, 10, 
-      { n: [5, 11, 
-      { n: [6, 7, 
-      { n: [6, 8, 
-      { n: [6, 9, 
-      { n: [7, 10, 
-      { n: [7, 11, 
-      { n: [8, 9, 
-      { n: [10, 11,
-    */
-
+    edge[0].a=0; edge[0].b=1;
+	edge[1].a=0; edge[1].b=4;
+	edge[2].a=0; edge[2].b=5;
+	edge[3].a=0; edge[3].b=8;
+	edge[4].a=0; edge[4].b=10;
+	edge[5].a=1; edge[5].b=6;
+	edge[6].a=1; edge[6].b=7;
+	edge[7].a=1; edge[7].b=8;
+	edge[8].a=1; edge[8].b=10;
+	edge[9].a=2; edge[9].b=3;
+	edge[10].a=2; edge[10].b=4;
+	edge[11].a=2; edge[11].b=5;
+	edge[12].a=2; edge[12].b=9;
+	edge[13].a=2; edge[13].b=11;
+	edge[14].a=3; edge[14].b=6;
+	edge[15].a=3; edge[15].b=7;
+	edge[16].a=3; edge[16].b=9;
+	edge[17].a=3; edge[17].b=11;
+	edge[18].a=4; edge[18].b=5;
+	edge[19].a=4; edge[19].b=8;
+	edge[20].a=4; edge[20].b=9;
+	edge[21].a=5; edge[21].b=10;
+	edge[22].a=5; edge[22].b=11;
+	edge[23].a=6; edge[23].b=7;
+	edge[24].a=6; edge[24].b=8;
+	edge[25].a=6; edge[25].b=9;
+	edge[26].a=7; edge[26].b=10;
+	edge[27].a=7; edge[27].b=11;
+	edge[28].a=8; edge[28].b=9;
+	edge[29].a=10; edge[29].b=11;
+	
     icoindices[0] = 0; icoindices[1] = 1; icoindices[2] = 8;
 	icoindices[3] = 0; icoindices[4] = 7; icoindices[5] = 3;
     icoindices[6] = 0; icoindices[7] = 4; icoindices[8] = 5;
