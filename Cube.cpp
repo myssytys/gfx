@@ -10,6 +10,8 @@ class Cube {
 
 	float centerX, centerY, centerZ;	
 	float* vertex;
+	float* normal;
+	float* color;
 	float* indices;
 
 	// Constructor

@@ -12,12 +12,6 @@ using namespace std;
 
 class Sphere {
 
-	struct Vertex {
-		float x,y,z;
-		float r,g,b;
-		float nx,ny,nz;
-	};
-
 	struct Edge {
 		float a,b;
 	};
@@ -28,6 +22,8 @@ class Sphere {
 	int hseg, vseg;
 	float* vertex;
 	float* icovertex;
+	float* normal;
+	float* color;
 	Edge* edge;
 	//Vector* vertex;
 	int* indices;

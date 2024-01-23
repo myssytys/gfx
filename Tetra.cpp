@@ -8,25 +8,15 @@ using namespace std;
 
 class Tetra {
 
-	struct Vertex {
-		float x, y, z;
-		float r, g ,b;
-		float nx, ny, nz;
-	};
-
-	float cX, cY, cZ;
-	float edge;
-	//Vertex* vertex;
+	float edge;	
 	float* vertex;
+	float* normals;
+	float* color;
 	int* indices;	
 
 	// Constructor
-	Tetra(float cX, float cY, float cZ, float edge) {
+	Tetra(float edge) {
 
-		
-		this->cX = cX;
-		this->cY = cY;
-		this->cZ = cZ;
 		this->edge = edge;
 
 		//vertex = new Vertex[12];
@@ -56,27 +46,7 @@ class Tetra {
 
 	}
 
-	float getCenterX() {
-		return cX;
-	}
-	float getCenterY() {
-		return cY;
-	}
-	float getCenterZ() {
-		return cZ;
-	}
-
-	void setCenterX(float cx) {
-		cX = cx;
-	}
-	void setCenterY(float cy) {
-		cY = cy;
-	}
-	void setCenterZ(float cz) {
-		cZ = cz;
-	}
-	
-	
+		
 	
 
 };
