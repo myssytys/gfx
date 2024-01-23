@@ -48,7 +48,7 @@ class Tetra {
 		};
 	
 
-	
+	}
 
 	~Tetra() {
 		delete[] vertex;
