@@ -2,6 +2,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <string>
+#include <vector>
 
 using namespace std;
 
@@ -15,7 +16,8 @@ class Tetra {
 
 	float cX, cY, cZ;
 	float edge;
-	Vertex* vertex;
+	//Vertex* vertex;
+	float* vertex;
 	int* indices;	
 
 	// Constructor
@@ -27,20 +29,25 @@ class Tetra {
 		this->cZ = cZ;
 		this->edge = edge;
 
-		vertex = new Vertex[12];
-		indices = new int[12];
+		//vertex = new Vertex[12];
+		//indices = new int[12];
 
-	    vertex[0].x = 0.0f;    vertex[1].y = edge;        vertex[2].z = 0.0f;
-		vertex[3].x =	edge/2;  vertex[4].y = -edge/2;     vertex[5].z = 0.0f;
-		vertex[6].x = 0.0f;    vertex[7].y = 0.0f;        vertex[8].z = edge;
-		vertex[9].x = -edge/2; vertex[10].y = -edge/2.0f; vertex[11].z = 0.0f;
+	    std::vector<float> vertex{
+			0.0f, edge, 0.0f,
+			edge/2, -edge/2, 0.0f,
+			0.0f, 0.0f, edge,
+			-edge/2, -edge/2.0f, 0.0f
+		};		
+		
 
-	   indices[0] = 0; indices[1]  = 1; indices[2] = 2;
-	   indices[3] = 0; indices[4]  = 2; indices[5] = 3;
-	   indices[6] = 0; indices[7]  = 3; indices[8] = 1;
-	   indices[9] = 1; indices[10] = 3; indices[11] = 2;
+		std::vector<int> indices{
+			0,1,2,
+			0,2,3,
+			0,3,1,
+			1,3,2
+		};
 	
-}
+
 	
 
 	~Tetra() {

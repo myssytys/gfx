@@ -2,12 +2,15 @@
 #include <cstdlib>
 #include <iostream>
 #include <string>
+#include <vector>
 
-using namespace std;
+//using namespace std;
 
 class Cube {
 
 	float centerX, centerY, centerZ;	
+	float* vertex;
+	float* indices;
 
 	// Constructor
 	Cube(float centerX, float centerY, float centerZ) {
@@ -17,7 +20,7 @@ class Cube {
 		this->centerY = centerY;
 		this->centerZ = centerZ;
 
-	    float vertex[]={
+	    std::vector<float> vertex{
 		/*   X     Y     Z 
 		/* front face */
 		-1.0, -1.0,  1.0,
@@ -52,7 +55,7 @@ class Cube {
 	};
 
 
-	int indices[]={
+	std::vector<int> indices={
 		 0, 1, 2,  2, 1, 3,	/* front */
 		 4, 5, 6,  6, 5, 7,	/* back */
 		 8, 9,10, 10, 9,11,	/* left */
