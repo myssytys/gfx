@@ -7,6 +7,11 @@ class Vector {
     float dot(const Vector &a, const Vector &b);
     float length(const Vector &a);
     Vector normalize(const Vector &a);
+    Vector operator+(const Vector &a);
+    Vector operator-(const Vector &a);
+    Vector operator/(const Vector &a);
+    Vector operator*(const Vector &a);
+
 
 };
 
