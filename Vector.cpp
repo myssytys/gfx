@@ -2,6 +2,7 @@
 
 class Vector {
 
+public:
     float x,y,z;
 
     Vector(float x, float y, float z) {
@@ -9,6 +10,8 @@ class Vector {
         this->y=y;
         this->z=z;
     }
+
+	Vector();
 
 float dot(const Vector &a, const Vector &b)
 {
@@ -32,6 +35,46 @@ Vector normalize(const Vector &a)
 {
 	const float lrcp = 1.0f / std::sqrt(dot(a, a));
 	return Vector(a.x * lrcp, a.y * lrcp, a.z * lrcp);
+}
+
+Vector operator+(const Vector &a) {
+	Vector res;
+	res.x = a.x+x;
+	res.y = a.y+y;
+	res.z = a.z+z;
+	return res;
+}
+
+Vector operator-(const Vector &a) {
+	Vector res;
+	res.x = a.x-x;
+	res.y = a.y-y;
+	res.z = a.z-z;
+	return res;
+}
+
+Vector operator/(const Vector &a) {
+	Vector res;
+	res.x = x/a.x;
+	res.y = y/a.y;
+	res.z = z/a.z;
+	return res;
+}
+
+Vector operator*(const Vector &a) {
+	Vector res;
+	res.x = x*a.x;
+	res.y = y*a.y;
+	res.z = z*a.z;
+	return res;
+}
+
+Vector operator=(const Vector &a) {
+	Vector res;
+	res.x = a.x;
+	res.y = a.y;
+	res.z = a.z;
+	return res;
 }
 
 };
