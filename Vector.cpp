@@ -11,7 +11,11 @@ public:
         this->z=z;
     }
 
-	Vector();
+	Vector() {
+		this->x=0.0f;
+		this->y=0.0f;
+		this->z=0.0f;
+	}
 
 float dot(const Vector &a, const Vector &b)
 {

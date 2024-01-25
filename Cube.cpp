@@ -93,6 +93,9 @@ class Cube {
 		centerZ = cz;
 	}
 	
+	~Cube() {
+		
+	}
 	
 	
 
