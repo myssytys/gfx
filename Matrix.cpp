@@ -12,14 +12,19 @@ class Matrix {
     Vector va;
     Vector vb;
     Vector vc;
-    float* M[12];
-    float* iM[12];
+    float* M;
+    float* iM;
 
         // Default constructor
     Matrix() {
             std::vector<float> iM {1.0f, 0.0f, 0.0f, 0.0f,
                                    0.0f, 1.0f, 0.0f, 0.0f,
                                    0.0f, 0.0f, 1.0f, 0.0f};
+            
+            std::vector<float> M {0.0f, 0.0f, 0.0f, 0.0f,
+                                  0.0f, 0.0f, 0.0f, 0.0f,
+                                  0.0f, 0.0f, 0.0f, 0.0f};
+
     };
 
      Matrix(float m11, float m21, float m31, float m41,
@@ -51,8 +56,41 @@ class Matrix {
 
     }
 
+    Matrix operator+(const Matrix &A) {
+        Matrix res;
+        res.M[0] = M[0]+A.M[0];
+        res.M[1] = M[1]+A.M[1];
+        res.M[2] = M[2]+A.M[2];
+        res.M[3] = M[3]+A.M[3];
+        res.M[4] = M[4]+A.M[4];
+        res.M[5] = M[5]+A.M[5];
+        res.M[6] = M[6]+A.M[6];
+        res.M[7] = M[7]+A.M[7];
+        res.M[8] = M[8]+A.M[8];
+        res.M[9] = M[9]+A.M[9];
+        res.M[10] = M[10]+A.M[10];
+        res.M[11] = M[11]+A.M[11];
+        res.M[12] = M[12]+A.M[12];        
+
+        return res;
+
+    }
+    Matrix operator-(const Matrix &A) {
+
+    }
+    Matrix operator/(const Matrix &A) {
+
+    }
+    Matrix operator*(const Matrix &A) {
+
+    }
+    Matrix operator=(const Matrix &A) {
+
+    }
+
     // Deconstructor
     ~Matrix() {
+        delete[] iM;
 
     }
 
