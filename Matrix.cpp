@@ -9,10 +9,12 @@ class Matrix {
 
     
     public:
-    Vector* va;
-    Vector* vb;
-    Vector* vc;
+    Vector va;
+    Vector vb;
+    Vector vc;
     float* M[12];
+
+    Matrix();
 
      Matrix(float m11, float m21, float m31, float m41,
             float m12, float m22, float m32, float m42,
@@ -26,9 +28,9 @@ class Matrix {
 
     Matrix(const Vector &A, const Vector &B, const Vector &C) {
 
-            std::vector<float> M {A.x, A.y, A.z, 1.0f,
-                                  B.x, B.y, B.z, 1.0f,
-                                  C.x, C.y, C.z, 1.0f};
+            std::vector<float> M {A.x, B.x, C.x, 1.0f,
+                                  A.y, B.y, C.y, 1.0f,
+                                  A.z, B.z, C.z, 1.0f};
 
     }
 };
