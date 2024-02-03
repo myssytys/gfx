@@ -12,6 +12,7 @@ using namespace std;
 
 class Sphere {
 
+public:
 	struct Edge {
 		float a,b;
 	};
