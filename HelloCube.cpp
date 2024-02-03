@@ -16,7 +16,7 @@
  * DATA STRUCTURES                                                          *
  ****************************************************************************/
 
-#define APP_TITLE "Sphere test"
+#define APP_TITLE "OpenGL test"
 
 /* Cube: state required for the cube. */
 typedef struct {
@@ -81,10 +81,8 @@ typedef struct {
 	bool releasedKeys[GLFW_KEY_LAST+1];
 
 	/* the cube we want to render */
-	Cube cube,sphere;
-	Tetra tetra = Tetra(1.0f);
-
-	
+	Cube cube;
+	TetraS tet;
 
 	/* the OpenGL state we need for the shaders */
 	GLuint program;		/* shader program */
