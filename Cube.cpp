@@ -8,6 +8,7 @@
 
 class Cube {
 
+public:
 	float centerX, centerY, centerZ;	
 	float* vertex;
 	float* normal;
