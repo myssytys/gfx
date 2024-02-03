@@ -3,6 +3,8 @@
 
 class Tetra {
 
+public:
+   Tetra();
    Tetra(float edge);
    ~Tetra();
 

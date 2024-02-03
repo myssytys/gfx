@@ -8,6 +8,7 @@ using namespace std;
 
 class Tetra {
 
+public:
 	float edge;	
 	float* vertex;
 	float* normals;
@@ -15,6 +16,8 @@ class Tetra {
 	int* indices;	
 
 	// Constructor
+	Tetra();
+
 	Tetra(float edge) {
 
 		this->edge = edge;
