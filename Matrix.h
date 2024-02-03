@@ -15,8 +15,12 @@ class Matrix {
     Matrix(float m11, float m21, float m31, float m41, 
            float m12, float m22, float m32, float m42,
            float m13, float m23, float m33, float m43);
-
     Matrix(const Vector &A, const Vector &B, const Vector &C);
+    Matrix operator+(const Matrix &A);
+    Matrix operator-(const Matrix &A);
+    Matrix operator/(const Matrix &A);
+    Matrix operator*(const Matrix &A);
+    Matrix operator=(const Matrix &A);
 
     ~Matrix();
 
