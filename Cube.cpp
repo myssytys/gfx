@@ -94,9 +94,7 @@ public:
 		centerZ = cz;
 	}
 	
-	~Cube() {
-		
-	}
+	
 	
 	
 

@@ -3,8 +3,8 @@
 
 class Cube {
     
+    public:
     Cube(float centerX, float centerY, float centerZ);
-    ~Cube();
 
     float getCenterX();
     float getCenterY();
