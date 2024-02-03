@@ -4,56 +4,29 @@
 #include <string>
 #include <vector>
 
-#include "Vector.cpp"
+#include "Sphere.h"
 
 using namespace std;
 
 #define PI 3.14159265358979323846
 
-class Sphere {
-
-public:
-	struct Edge {
-		float a,b;
-	};
-
-	float radius;
-	float centerX, centerY, centerZ;
-	float phi, theta, dtheta, dphi;
-	int hseg, vseg;
-	float* vertex;
-	float* icovertex;
-	float* normal;
-	float* color;
-	Edge* edge;
-	//Vector* vertex;
-	int* indices;
-	int* icoindices;
-
-
 	// Constructor
-	Sphere(float centerX, float centerY, float centerZ, float radius, int hseg, int vseg) {
+	Sphere::Sphere(float centerX, float centerY, float centerZ, float radius, int hseg, int vseg) {
 
-		this->radius = radius;
-		this->centerX = centerX;
-		this->centerY = centerY;
-		this->centerZ = centerZ;
-		this->vseg = vseg;
-		this->hseg = hseg;
 
-		this->phi = 0.0f;
-		this->theta = 0.0f;
-		this->dphi = 2*PI/(vseg-1);
-		this->dtheta = PI/(hseg-1);
+		phi = 0.0f;
+		theta = 0.0f;
+		dphi = 2*PI/(vseg-1);
+		dtheta = PI/(hseg-1);
 
-		vertex = new float[vseg*hseg];
+		vertices = new float[vseg*hseg];
 		indices = new int[vseg*hseg];
 		//icoindices = new int[120];
 		edge = new Edge[60];
-
+		this->radius = radius;
 	}
 
-	void UVSphere() {
+	void Sphere::UVSphere() {
 
 		int i,j;
 
@@ -68,9 +41,9 @@ public:
 
 				phi += dphi;
 
-				vertex[i*j] = sin(phi) * cos(theta);
-				vertex[i*j] = sin(phi) * sin(theta);
-				vertex[i*j] = cos(phi);
+				vertices[i*j] = sin(phi) * cos(theta);
+				vertices[i*j] = sin(phi) * sin(theta);
+				vertices[i*j] = cos(phi);
 
 
 			}
@@ -81,7 +54,7 @@ public:
 
 	}
 
-	void generateIcosahedron(float size) {
+	void Sphere::generateIcosahedron(float size) {
 
   	float phi = (1.0 + sqrt(5.0)) / 2.0;
 
@@ -139,36 +112,8 @@ public:
 	float getRadius() {
 		return radius;
 	}
-	float getCenterX() {
-		return centerX;
-	}
-	float getCenterY() {
-		return centerY;
-	}
-	float getCenterZ() {
-		return centerZ;
-	}
-
 	void setRadius(float r) {
 		radius = r;
 	}
-	void setCenterX(float cx) {
-		centerX = cx;
-	}
-	void setCenterY(float cy) {
-		centerY = cy;
-	}
-	void setCenterZ(float cz) {
-		centerZ = cz;
-	}
-	
-	~Sphere() {
 
-		delete vertex;
-		delete indices;
-		delete icovertex;
-		delete icoindices;
-		delete edge;
-	}
 
-};

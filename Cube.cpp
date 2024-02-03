@@ -4,24 +4,12 @@
 #include <string>
 #include <vector>
 
+#include "Cube.h"
+
 //using namespace std;
 
-class Cube {
-
-public:
-	float centerX, centerY, centerZ;	
-	float* vertex;
-	float* normal;
-	float* color;
-	float* indices;
-
 	// Constructor
-	Cube(float centerX, float centerY, float centerZ) {
-
-		
-		this->centerX = centerX;
-		this->centerY = centerY;
-		this->centerZ = centerZ;
+	Cube::Cube(float centerX, float centerY, float centerZ) {
 
 	    std::vector<float> vertex{
 		/*   X     Y     Z 
@@ -66,30 +54,6 @@ public:
 		16,17,18, 18,17,19,	/* top */
 		20,21,22, 22,21,23	/* bottom */
 	};
-	}
-
-	float getCenterX() {
-		return centerX;
-	}
-	float getCenterY() {
-		return centerY;
-	}
-	float getCenterZ() {
-		return centerZ;
-	}
-
-	void setCenterX(float cx) {
-		centerX = cx;
-	}
-	void setCenterY(float cy) {
-		centerY = cy;
-	}
-	void setCenterZ(float cz) {
-		centerZ = cz;
-	}
-	
-	
-	
-	
+				
 
 };

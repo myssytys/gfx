@@ -17,8 +17,6 @@ class Vector {
     Vector operator/(const Vector &a);
     Vector operator*(const Vector &a);
     Vector operator=(const Vector &a);
-    ~Vector();
-
 
 };
 

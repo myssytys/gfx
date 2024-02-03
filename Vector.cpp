@@ -1,34 +1,18 @@
 #include <cmath>
 
-class Vector {
-
-public:
-    float x,y,z;
-	float r,g,b;
+#include "Vector.h"
 
 		// Default constructor
-	Vector() {
+Vector::Vector() {
 		this->x=0.0f;
 		this->y=0.0f;
-		this->z=0.0f;
-		this->r=1.0f;
-		this->g=1.0f;
-		this->b=1.0f;
-	}
+		this->z=0.0f;	}
 		// Initializing constructor
-    Vector(float x, float y, float z) {
+Vector::Vector(float x, float y, float z) {
         this->x=x;
         this->y=y;
         this->z=z;
     }
-	Vector(float x, float y, float z, float r, float g, float b) {
-		this->x=x;
-		this->y=y;
-		this->z=z;
-		this->r=r;
-		this->g=g;
-		this->b=b;
-	}
 		// Dot product of 2 vectors
 float dot(const Vector &a, const Vector &b)
 {
@@ -54,48 +38,42 @@ Vector normalize(const Vector &a)
 	return Vector(a.x * lrcp, a.y * lrcp, a.z * lrcp);
 }
 	
-Vector operator+(const Vector &a) {
+Vector operator+(const Vector &a, const Vector &b) {
 	Vector res;
-	res.x = a.x+this->x;
-	res.y = a.y+this->y;
-	res.z = a.z+this->z;
+	res.x = a.x+b.x;
+	res.y = a.y+b.y;
+	res.z = a.z+b.z;
 	return res;
 }
 
-Vector operator-(const Vector &a) {
+Vector operator-(const Vector &a, const Vector &b) {
 	Vector res;
-	res.x = this->x-a.x;
-	res.y = this->y-a.y;
-	res.z = this->z-a.z;
+	res.x = b.x-a.x;
+	res.y = b.y-a.y;
+	res.z = b.z-a.z;
 	return res;
 }
 
-Vector operator/(const Vector &a) {
+Vector operator/(const Vector &a, const Vector &b) {
 	Vector res;
-	res.x = this->x/a.x;
-	res.y = this->y/a.y;
-	res.z = this->z/a.z;
+	res.x = b.x/a.x;
+	res.y = b.y/a.y;
+	res.z = b.z/a.z;
 	return res;
 }
 
-Vector operator*(const Vector &a) {
+Vector operator*(const Vector &a, const Vector &b) {
 	Vector res;
-	res.x = this->x*a.x;
-	res.y = this->y*a.y;
-	res.z = this->z*a.z;
+	res.x = b.x*a.x;
+	res.y = b.y*a.y;
+	res.z = b.z*a.z;
 	return res;
 }
 
-Vector operator=(const Vector &a) {
+Vector operator=(const Vector &a, Vector &b) {
 	Vector res;
 	res.x = a.x;
 	res.y = a.y;
 	res.z = a.z;
 	return res;
 }
-
-~Vector() {
-
-}
-
-};

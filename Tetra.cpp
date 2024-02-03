@@ -4,23 +4,12 @@
 #include <string>
 #include <vector>
 
+#include "Tetra.h"
+
 using namespace std;
 
-class Tetra {
+	Tetra::Tetra(float edge) {
 
-public:
-	float edge;	
-	float* vertex;
-	float* normals;
-	float* color;
-	int* indices;	
-
-	// Constructor
-//	Tetra();
-
-	Tetra(float edge) {
-
-		this->edge = edge;
 
 		//vertex = new Vertex[12];
 		//indices = new int[12];
@@ -42,4 +31,4 @@ public:
 	}
 
 
-};
+
