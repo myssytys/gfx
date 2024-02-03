@@ -22,8 +22,6 @@ class Matrix {
     Matrix operator*(const Matrix &A);
     Matrix operator=(const Matrix &A);
 
-    ~Matrix();
-
 };
 
-#endif;
+#endif

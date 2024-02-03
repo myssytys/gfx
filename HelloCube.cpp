@@ -25,7 +25,7 @@ typedef struct {
 	glm::mat4 model;	/* local model transformation */
 } Cube, Sphere, TetraS;
 
-Tetra tetra;
+Tetra tetra(1.0f);
 
 /* OpenGL debug output error level */
 typedef enum {

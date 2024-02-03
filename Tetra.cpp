@@ -16,7 +16,7 @@ public:
 	int* indices;	
 
 	// Constructor
-	Tetra();
+//	Tetra();
 
 	Tetra(float edge) {
 
@@ -39,17 +39,7 @@ public:
 			0,3,1,
 			1,3,2
 		};
-	
-
 	}
 
-	~Tetra() {
-		delete[] vertex;
-		delete[] indices;
-
-	}
-
-		
-	
 
 };

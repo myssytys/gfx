@@ -68,12 +68,6 @@ public:
 	};
 	}
 
-	~Cube() {
-		//delete[] vertex;
-		//delete[] indices;
-
-	}
-
 	float getCenterX() {
 		return centerX;
 	}

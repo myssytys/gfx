@@ -2,7 +2,6 @@
 #include <vector>
 #include <cmath>
 
-#include "Matrix.h"
 #include "Vector.h"
 
 class Matrix {
@@ -153,10 +152,5 @@ class Matrix {
     }
 
     // Deconstructor
-    ~Matrix() {
-        delete[] iM;
-        delete[] M;
-
-    }
 
 };

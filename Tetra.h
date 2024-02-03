@@ -4,9 +4,14 @@
 class Tetra {
 
 public:
-   Tetra();
+
+   float edge;	
+	float* vertex;
+	float* normals;
+	float* color;
+	int* indices;
+  // Tetra();
    Tetra(float edge);
-   ~Tetra();
 
 };
 
