@@ -10,6 +10,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "Tetra.h"
+
 /****************************************************************************
  * DATA STRUCTURES                                                          *
  ****************************************************************************/
@@ -21,7 +23,9 @@ typedef struct {
 	GLuint vbo[2];		/* vertex and index buffer names */
 	GLuint vao;		/* vertex array object */
 	glm::mat4 model;	/* local model transformation */
-} Cube, Sphere;
+} Cube, Sphere, TetraS;
+
+Tetra tetra;
 
 /* OpenGL debug output error level */
 typedef enum {
@@ -78,6 +82,9 @@ typedef struct {
 
 	/* the cube we want to render */
 	Cube cube,sphere;
+	Tetra tetra = Tetra(1.0f);
+
+	
 
 	/* the OpenGL state we need for the shaders */
 	GLuint program;		/* shader program */
@@ -572,82 +579,51 @@ static bool initShaders(CubeApp *app, const char *vs, const char *fs)
  * This function is only called once. After it returned, all the data needed
  * for drawing the cube is stored in GL objects, so we do not have to
  * re-specify the vertex data every time the object is drawn. */
-static void initCube(Cube *cube)
+static void initCube(TetraS *tetraS)
 {
-	static const Vertex cubeGeometry[]={
-		/*   X     Y     Z       R    G    B    A */
-		/* front face */
-		{{-1.0, -1.0,  1.0},  {255,   0,   0, 255}},
-		{{ 1.0, -1.0,  1.0},  {192,   0,   0, 255}},
-		{{-1.0,  1.0,  1.0},  {192,   0,   0, 255}},
-		{{ 1.0,  1.0,  1.0},  {128,   0,   0, 255}},
-		/* back face */
-		{{ 1.0, -1.0, -1.0},  {  0, 255, 255, 255}},
-		{{-1.0, -1.0, -1.0},  {  0, 192, 192, 255}},
-		{{ 1.0,  1.0, -1.0},  {  0, 192, 192, 255}},
-		{{-1.0,  1.0, -1.0},  {  0, 128, 128, 255}},
-		/* left  face */
-		{{-1.0, -1.0, -1.0},  {  0, 255,   0, 255}},
-		{{-1.0, -1.0,  1.0},  {  0, 192,   0, 255}},
-		{{-1.0,  1.0, -1.0},  {  0, 192,   0, 255}},
-		{{-1.0,  1.0,  1.0},  {  0, 128,   0, 255}},
-		/* right face */
-		{{ 1.0, -1.0,  1.0},  {255,   0, 255, 255}},
-		{{ 1.0, -1.0, -1.0},  {192,   0, 192, 255}},
-		{{ 1.0,  1.0,  1.0},  {192,   0, 192, 255}},
-		{{ 1.0,  1.0, -1.0},  {128,   0, 128, 255}},
-		/* top face */
-		{{-1.0,  1.0,  1.0},  {  0,   0, 255, 255}},
-		{{ 1.0,  1.0,  1.0},  {  0,   0, 192, 255}},
-		{{-1.0,  1.0, -1.0},  {  0,   0, 192, 255}},
-		{{ 1.0,  1.0, -1.0},  {  0,   0, 128, 255}},
-		/* bottom face */
-		{{ 1.0, -1.0,  1.0},  {255, 255,   0, 255}},
-		{{-1.0, -1.0,  1.0},  {192, 192,   0, 255}},
-		{{ 1.0, -1.0, -1.0},  {192, 192,   0, 255}},
-		{{-1.0, -1.0, -1.0},  {128, 128,   0, 255}},
-	};
+
+	tetra = Tetra(1.0f);
+	static const float* tetraVertices = tetra.vertex;
+
+	static const int* tetraIndices = tetra.indices;
+	
 
 	/* use two triangles sharing an edge for each face */
-	static const GLushort cubeConnectivity[]={
-		 0, 1, 2,  2, 1, 3,	/* front */
-		 4, 5, 6,  6, 5, 7,	/* back */
-		 8, 9,10, 10, 9,11,	/* left */
-		12,13,14, 14,13,15,	/* right */
-		16,17,18, 18,17,19,	/* top */
-		20,21,22, 22,21,23	/* bottom */
-	};
+	//static const GLushort tetraIndices[]=
+	
+	
 
 	/* set up VAO and vertex and element array buffers */
-	glGenVertexArrays(1,&cube->vao);
-	glBindVertexArray(cube->vao);
-	info("Cube: created VAO %u", cube->vao);
+	glGenVertexArrays(1,&tetraS->vao);
+	glBindVertexArray(tetraS->vao);
+	info("Cube: created VAO %u", tetraS->vao);
 
-	glGenBuffers(2,cube->vbo);
-	glBindBuffer(GL_ARRAY_BUFFER, cube->vbo[0]);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(cubeGeometry), cubeGeometry, GL_STATIC_DRAW);
-	info("Cube: created VBO %u for %u bytes of vertex data", cube->vbo[0], (unsigned)sizeof(cubeGeometry));
+	glGenBuffers(2,tetraS->vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, tetraS->vbo[0]);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(tetraVertices), tetraVertices, GL_STATIC_DRAW);
+	info("Cube: created VBO %u for %u bytes of vertex data", tetraS->vbo[0], (unsigned)sizeof(tetraVertices));
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, cube->vbo[1]);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(cubeConnectivity), cubeConnectivity, GL_STATIC_DRAW);
-	info("Cube: created VBO %u for %u bytes of element data", cube->vbo[1], (unsigned)sizeof(cubeConnectivity));
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, tetraS->vbo[1]);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(tetraIndices), tetraIndices, GL_STATIC_DRAW);
+	info("Cube: created VBO %u for %u bytes of element data", tetraS->vbo[1], (unsigned)sizeof(cubeConnectivity));
 
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), BUFFER_OFFSET(offsetof(Vertex,pos)));
-	glVertexAttribPointer(2, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), BUFFER_OFFSET(offsetof(Vertex,clr)));
+	//glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(tetra.vertex), BUFFER_OFFSET(offsetof(Vertex,pos)));
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(tetra.vertex), 0);
+	//glVertexAttribPointer(2, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), BUFFER_OFFSET(offsetof(Vertex,clr)));
 
 	glEnableVertexAttribArray(0);
-	glEnableVertexAttribArray(2);
+	//glEnableVertexAttribArray(2);
 
 	glBindVertexArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
-	cube->model = glm::mat4(1.0f);
+	tetraS->model = glm::mat4(1.0f);
 	GL_ERROR_DBG("cube initialization");
 }
 
 /* Destroy all GL objects related to the cube. */
-static void destroyCube(Cube *cube)
+static void destroyCube(TetraS *cube)
 {
 	glBindVertexArray(0);
 	if (cube->vao) {
