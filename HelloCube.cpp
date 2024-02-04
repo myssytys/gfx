@@ -9,6 +9,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <vector>
 
 #include "Tetra.h"
 
@@ -27,6 +28,11 @@ typedef struct {
 } Cube, Sphere, TetraS;
 
 Tetra tetra(1.0f);
+
+float* triangleVertices;
+int* triangleIndices;
+float* triangleColors;
+
 
 /* OpenGL debug output error level */
 typedef enum {
@@ -581,7 +587,29 @@ static bool initShaders(CubeApp *app, const char *vs, const char *fs)
 static void initCube(TetraS *tetraS)
 {
 
-	tetra = Tetra(1.0f);	
+	tetra = Tetra(1.0f);
+
+	std::vector<float> triangleVertices = {
+
+			0.0f, 1.0f, 0.0f,
+			1.0f/2, -1.0f/2, 0.0f,
+			0.0f, 0.0f, 1.0f,
+			-1.0f/2, -1.0f/2.0f, 0.0f
+	};
+
+	std::vector<int> triangleIndices = {
+			0,1,2,
+			0,2,3,
+			0,3,1,
+			1,3,2
+	};
+
+	std::vector<float> triangleColors = {
+		1.0f, 1.0f, 1.0f, 
+		1.0f, 1.0f, 1.0f,
+		1.0f, 1.0f, 1.0f,
+		1.0f, 1.0f, 1.0f
+	};
 
 
 	/* set up VAO and vertex and element array buffers */
@@ -591,17 +619,17 @@ static void initCube(TetraS *tetraS)
 
 	glGenBuffers(2,tetraS->vbo);
 	glBindBuffer(GL_ARRAY_BUFFER, tetraS->vbo[0]);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(tetra.vertex), tetra.vertex, GL_STATIC_DRAW);
-	info("Cube: created VBO %u for %u bytes of vertex data", tetraS->vbo[0], (unsigned)sizeof(tetra.vertex));
+	glBufferData(GL_ARRAY_BUFFER, sizeof(triangleVertices), triangleVertices, GL_STATIC_DRAW);
+	info("Cube: created VBO %u for %u bytes of vertex data", tetraS->vbo[0], (unsigned)sizeof(triangleVertices));
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, tetraS->vbo[1]);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(tetra.indices), tetra.indices, GL_STATIC_DRAW);
-	info("Cube: created VBO %u for %u bytes of element data", tetraS->vbo[1], (unsigned)sizeof(tetra.indices));
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(triangleIndices), triangleIndices, GL_STATIC_DRAW);
+	info("Cube: created VBO %u for %u bytes of element data", tetraS->vbo[1], (unsigned)sizeof(triangleIndices));
 
 	//glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(tetra.vertex), BUFFER_OFFSET(offsetof(Vertex,pos)));
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, tetra.vertex);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, triangleVertices);
 	//glVertexAttribPointer(2, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), BUFFER_OFFSET(offsetof(Vertex,clr)));
-	glVertexAttribPointer(2, 3, GL_FLOAT, GL_TRUE, 0, tetra.color);
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_TRUE, 0, triangleColors);
 
 	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(2);
@@ -814,7 +842,7 @@ bool initCubeApplication(CubeApp *app, const AppConfig& cfg)
 
 	/* initialize the GL context */
 	initGLState(cfg);
-	initCube(&app->cube);
+	initCube(&app->tet);
 	if (!initShaders(app,"shaders/color.vs.glsl","shaders/color.fs.glsl")) {
 		warn("something wrong with our shaders...");
 		return false;
@@ -832,7 +860,7 @@ static void destroyCubeApp(CubeApp *app)
 	if (app->flags & APP_HAVE_GLFW) {
 		if (app->win) {
 			if (app->flags & APP_HAVE_GL) {
-				destroyCube(&app->cube);
+				destroyCube(&app->tet);
 				destroyShaders(app);
 			}
 			glfwDestroyWindow(app->win);
@@ -861,7 +889,7 @@ drawScene(CubeApp *app)
 
 	/* draw the cube */
 	glBindVertexArray(app->tet.vao);
-	glDrawElements(GL_TRIANGLES, 4, GL_FLOAT, tetra.indices);
+	glDrawElements(GL_TRIANGLES, 4*3, GL_UNSIGNED_INT, tetra.indices);
 
 	/* "unbind" the VAO and the program. We do not have to do this.
 	* OpenGL is a state machine. The last binings will stay effective
