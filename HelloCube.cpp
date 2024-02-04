@@ -581,37 +581,30 @@ static bool initShaders(CubeApp *app, const char *vs, const char *fs)
 static void initCube(TetraS *tetraS)
 {
 
-	tetra = Tetra(1.0f);
-	static const float* tetraVertices = tetra.vertex;
+	tetra = Tetra(1.0f);	
 
-	static const int* tetraIndices = tetra.indices;
-	
-
-	/* use two triangles sharing an edge for each face */
-	//static const GLushort tetraIndices[]=
-	
-	
 
 	/* set up VAO and vertex and element array buffers */
 	glGenVertexArrays(1,&tetraS->vao);
 	glBindVertexArray(tetraS->vao);
-	info("Cube: created VAO %u", tetraS->vao);
+	info("Cube: created VAO %u", tetraS->vao);	
 
 	glGenBuffers(2,tetraS->vbo);
 	glBindBuffer(GL_ARRAY_BUFFER, tetraS->vbo[0]);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(tetraVertices), tetraVertices, GL_STATIC_DRAW);
-	info("Cube: created VBO %u for %u bytes of vertex data", tetraS->vbo[0], (unsigned)sizeof(tetraVertices));
+	glBufferData(GL_ARRAY_BUFFER, sizeof(tetra.vertex), tetra.vertex, GL_STATIC_DRAW);
+	info("Cube: created VBO %u for %u bytes of vertex data", tetraS->vbo[0], (unsigned)sizeof(tetra.vertex));
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, tetraS->vbo[1]);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(tetraIndices), tetraIndices, GL_STATIC_DRAW);
-	info("Cube: created VBO %u for %u bytes of element data", tetraS->vbo[1], (unsigned)sizeof(tetraIndices));
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(tetra.indices), tetra.indices, GL_STATIC_DRAW);
+	info("Cube: created VBO %u for %u bytes of element data", tetraS->vbo[1], (unsigned)sizeof(tetra.indices));
 
 	//glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(tetra.vertex), BUFFER_OFFSET(offsetof(Vertex,pos)));
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(tetra.vertex), 0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, tetra.vertex);
 	//glVertexAttribPointer(2, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), BUFFER_OFFSET(offsetof(Vertex,clr)));
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_TRUE, 0, tetra.color);
 
 	glEnableVertexAttribArray(0);
-	//glEnableVertexAttribArray(2);
+	glEnableVertexAttribArray(2);
 
 	glBindVertexArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -858,7 +851,7 @@ drawScene(CubeApp *app)
 {
 	/* combine model and view matrices to the modelView matrix our
 	 * shader expects */
-	glm::mat4 modelView = app->view * app->cube.model;
+	glm::mat4 modelView = app->view * app->tet.model;
 
 	/* use the program and update the uniforms */
 	glUseProgram(app->program);
@@ -867,8 +860,8 @@ drawScene(CubeApp *app)
 	glUniform1f(app->locTime, (GLfloat)app->timeCur);
 
 	/* draw the cube */
-	glBindVertexArray(app->cube.vao);
-	glDrawElements(GL_TRIANGLES, 6 * 6, GL_UNSIGNED_SHORT, BUFFER_OFFSET(0));
+	glBindVertexArray(app->tet.vao);
+	glDrawElements(GL_TRIANGLES, 4, GL_FLOAT, tetra.indices);
 
 	/* "unbind" the VAO and the program. We do not have to do this.
 	* OpenGL is a state machine. The last binings will stay effective
