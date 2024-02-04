@@ -652,15 +652,15 @@ static void initCube(Cube *cube)
 
 	glGenBuffers(2,cube->vbo);
 	glBindBuffer(GL_ARRAY_BUFFER, cube->vbo[0]);
-	glBufferData(GL_ARRAY_BUFFER, 12, tetraVertex, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(tetraVertex), &tetraVertex, GL_STATIC_DRAW);
 	info("Cube: created VBO %u for %u bytes of vertex data", cube->vbo[0], (unsigned)sizeof(tetraVertex));
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, cube->vbo[1]);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 12, tetraIndices, GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(tetraIndices), &tetraIndices, GL_STATIC_DRAW);
 	info("Cube: created VBO %u for %u bytes of element data", cube->vbo[1], (unsigned)sizeof(tetraIndices));
 
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 12, tetraVertex);
-	glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, 16, tetraColors);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(tetraVertex), &tetraVertex);
+	glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, sizeof(tetraColors), &tetraColors);
 
 	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(2);
@@ -920,7 +920,7 @@ drawScene(CubeApp *app)
 
 	/* draw the cube */
 	glBindVertexArray(app->cube.vao);
-	glDrawElements(GL_TRIANGLES, 12, GL_UNSIGNED_SHORT, tetraIndices);
+	glDrawElements(GL_TRIANGLES, sizeof(tetraIndices), GL_UNSIGNED_SHORT, &tetraIndices);
 
 	/* "unbind" the VAO and the program. We do not have to do this.
 	* OpenGL is a state machine. The last binings will stay effective
