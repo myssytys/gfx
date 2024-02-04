@@ -619,17 +619,17 @@ static void initCube(TetraS *tetraS)
 
 	glGenBuffers(2,tetraS->vbo);
 	glBindBuffer(GL_ARRAY_BUFFER, tetraS->vbo[0]);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(triangleVertices), triangleVertices, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(triangleVertices), &triangleVertices, GL_STATIC_DRAW);
 	info("Cube: created VBO %u for %u bytes of vertex data", tetraS->vbo[0], (unsigned)sizeof(triangleVertices));
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, tetraS->vbo[1]);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(triangleIndices), triangleIndices, GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(triangleIndices), &triangleIndices, GL_STATIC_DRAW);
 	info("Cube: created VBO %u for %u bytes of element data", tetraS->vbo[1], (unsigned)sizeof(triangleIndices));
 
 	//glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(tetra.vertex), BUFFER_OFFSET(offsetof(Vertex,pos)));
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, triangleVertices);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, &triangleVertices);
 	//glVertexAttribPointer(2, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), BUFFER_OFFSET(offsetof(Vertex,clr)));
-	glVertexAttribPointer(2, 3, GL_FLOAT, GL_TRUE, 0, triangleColors);
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_TRUE, 0, &triangleColors);
 
 	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(2);
