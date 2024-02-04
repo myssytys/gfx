@@ -1,18 +1,8 @@
-#include <cmath>
-#include <cstdlib>
-#include <iostream>
-#include <string>
 #include <vector>
 
 #include "Tetra.h"
 
-using namespace std;
-
 	Tetra::Tetra(float edge) {
-
-
-		//vertex = new Vertex[12];
-		//indices = new int[12];
 
 	    std::vector<float> vertex{
 			0.0f, edge, 0.0f,

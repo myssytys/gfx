@@ -14,12 +14,12 @@ Vector::Vector(float x, float y, float z) {
         this->z=z;
     }
 		// Dot product of 2 vectors
-float dot(const Vector &a, const Vector &b)
+float Vector::dot(const Vector &a, const Vector &b)
 {
 	return a.x * b.x + a.y * b.y + a.z * b.z;
 }
 		// Cross product of 2 vectors
-Vector cross(const Vector &a, const Vector &b)
+Vector Vector::cross(const Vector &a, const Vector &b)
 {
 	return Vector(
 		a.y * b.z - a.z * b.y,
@@ -27,53 +27,53 @@ Vector cross(const Vector &a, const Vector &b)
 		a.x * b.y - a.y * b.x);
 }
 	// Return length of vector
-float length(const Vector &a)
+float Vector::length(const Vector &a)
 {
 	return std::sqrt(dot(a, a));
 }
 	// Get vector normal
-Vector normalize(const Vector &a)
+Vector Vector::normalize(const Vector &a)
 {
 	const float lrcp = 1.0f / std::sqrt(dot(a, a));
 	return Vector(a.x * lrcp, a.y * lrcp, a.z * lrcp);
 }
 	
-Vector operator+(const Vector &a, const Vector &b) {
+Vector Vector::operator+(const Vector &a) {
 	Vector res;
-	res.x = a.x+b.x;
-	res.y = a.y+b.y;
-	res.z = a.z+b.z;
+	res.x = a.x+x;
+	res.y = a.y+y;
+	res.z = a.z+z;
 	return res;
 }
 
-Vector operator-(const Vector &a, const Vector &b) {
+Vector Vector::operator-(const Vector &a) {
 	Vector res;
-	res.x = b.x-a.x;
-	res.y = b.y-a.y;
-	res.z = b.z-a.z;
+	res.x = x-a.x;
+	res.y = y-a.y;
+	res.z = z-a.z;
 	return res;
 }
 
-Vector operator/(const Vector &a, const Vector &b) {
+Vector Vector::operator/(const Vector &a) {
 	Vector res;
-	res.x = b.x/a.x;
-	res.y = b.y/a.y;
-	res.z = b.z/a.z;
+	res.x = x/a.x;
+	res.y = y/a.y;
+	res.z = z/a.z;
 	return res;
 }
 
-Vector operator*(const Vector &a, const Vector &b) {
+Vector Vector::operator*(const Vector &a) {
 	Vector res;
-	res.x = b.x*a.x;
-	res.y = b.y*a.y;
-	res.z = b.z*a.z;
+	res.x = x*a.x;
+	res.y = y*a.y;
+	res.z = z*a.z;
 	return res;
 }
 
-Vector operator=(const Vector &a, Vector &b) {
+Vector Vector::operator=(const Vector &a) {
 	Vector res;
-	res.x = a.x;
-	res.y = a.y;
-	res.z = a.z;
+	res.x = x;
+	res.y = y;
+	res.z = z;
 	return res;
 }

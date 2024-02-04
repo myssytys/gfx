@@ -109,10 +109,10 @@ using namespace std;
 	
 	}
 
-	float getRadius() {
+	float Sphere::getRadius() {
 		return radius;
 	}
-	void setRadius(float r) {
+	void Sphere::setRadius(float r) {
 		radius = r;
 	}
 
