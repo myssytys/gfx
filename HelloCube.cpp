@@ -625,9 +625,9 @@ static void initCube(Cube *cube)
 
 	static const GLfloat tetraVertex[] = {
 		0.0f, 1.0f, 0.0f,
-		1.0f/2, -1.0f/2, 0.0f,
+		1.0f/2.0f, -1.0f/2.0f, 0.0f,
 		0.0f, 0.0f, 1.0f,
-		1.0f/2, -1.0f/2.0f, 0.0f
+		1.0f/2.0f, -1.0f/2.0f, 0.0f
 
 	};
 
@@ -920,7 +920,7 @@ drawScene(CubeApp *app)
 
 	/* draw the cube */
 	glBindVertexArray(app->cube.vao);
-	glDrawElements(GL_TRIANGLES, 12, GL_UNSIGNED_INT, &tetraIndices);
+	glDrawElements(GL_TRIANGLES, 12, GL_UNSIGNED_SHORT, tetraIndices);
 
 	/* "unbind" the VAO and the program. We do not have to do this.
 	* OpenGL is a state machine. The last binings will stay effective
