@@ -4,7 +4,11 @@
 class Cube {
     
     public:
-    Cube(float centerX, float centerY, float centerZ);
+
+    float* vertices;
+    int* indices;
+    Cube();
+    
 };
 
 #endif

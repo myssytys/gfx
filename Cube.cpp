@@ -1,17 +1,9 @@
-#include <cmath>
-#include <cstdlib>
-#include <iostream>
-#include <string>
 #include <vector>
 
 #include "Cube.h"
 
-//using namespace std;
-
-	// Constructor
-	Cube::Cube(float centerX, float centerY, float centerZ) {
-
-	    std::vector<float> vertex{
+Cube::Cube() {
+	    std::vector<float> vertices{
 		/*   X     Y     Z 
 		/* front face */
 		-1.0, -1.0,  1.0,
@@ -54,6 +46,6 @@
 		16,17,18, 18,17,19,	/* top */
 		20,21,22, 22,21,23	/* bottom */
 	};
-				
+}
 
-};
+
