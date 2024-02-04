@@ -4,7 +4,6 @@
 
 #include "Matrix.h"
 
-
         // Default constructor
     Matrix::Matrix() {
             std::vector<float> iM {1.0f, 0.0f, 0.0f, 0.0f,
@@ -103,7 +102,7 @@
         return res;      
 
     }
-     Matrix operator*(Matrix& A) {
+     Matrix Matrix::operator*(const Matrix& A) {
 
         Matrix res;
 
@@ -122,7 +121,7 @@
 
         return res;      
     }
-    Matrix operator=(Matrix &A) {
+    Matrix Matrix::operator=(const Matrix &A) {
 
         Matrix res;
 
@@ -143,7 +142,4 @@
 
     }
 
-    // Deconstructor
-
-    Matrix::~Matrix() {}
 
