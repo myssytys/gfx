@@ -10,8 +10,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-//#include "Tetra.h"
-#include "Tetra.cpp"
+#include "Tetra.h"
+
 
 /****************************************************************************
  * DATA STRUCTURES                                                          *
