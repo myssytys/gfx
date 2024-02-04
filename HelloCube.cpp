@@ -748,7 +748,7 @@ bool initCubeApplication(CubeApp *app, const AppConfig& cfg)
 	for (i=0; i<=GLFW_KEY_LAST; i++)
 		app->pressedKeys[i]=app->releasedKeys[i]=false;
 
-	app->cube.vbo[0]=app->cube.vbo[1]=app->cube.vao=0;
+	app->tet.vbo[0]=app->tet.vbo[1]=app->tet.vao=0;
 	app->program=0;
 
 	/* initialize GLFW library */
@@ -889,7 +889,7 @@ drawScene(CubeApp *app)
 
 	/* draw the cube */
 	glBindVertexArray(app->tet.vao);
-	glDrawElements(GL_TRIANGLES, 4*3, GL_UNSIGNED_INT, tetra.indices);
+	glDrawElements(GL_TRIANGLES, 4*3, GL_UNSIGNED_INT, &triangleIndices);
 
 	/* "unbind" the VAO and the program. We do not have to do this.
 	* OpenGL is a state machine. The last binings will stay effective
