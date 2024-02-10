@@ -10,8 +10,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <vector>
-
 /****************************************************************************
  * DATA STRUCTURES                                                          *
  ****************************************************************************/
@@ -56,9 +54,6 @@ struct AppConfig {
 		debugOutputSynchronous(false)
 	{}
 };
-
-int* tetraIndices;
-
 
 /* CubeApp: We encapsulate all of our application state in this struct.
  * We use a single instance of this object (in main), and set a pointer to
@@ -582,67 +577,18 @@ static void initCube(Cube *cube)
 	static const Vertex cubeGeometry[]={
 		/*   X     Y     Z       R    G    B    A */
 		/* front face */
-		{{-1.0, -1.0,  1.0},  {255,   0,   0, 255}},
-		{{ 1.0, -1.0,  1.0},  {192,   0,   0, 255}},
-		{{-1.0,  1.0,  1.0},  {192,   0,   0, 255}},
-		{{ 1.0,  1.0,  1.0},  {128,   0,   0, 255}},
-		/* back face */
-		{{ 1.0, -1.0, -1.0},  {  0, 255, 255, 255}},
-		{{-1.0, -1.0, -1.0},  {  0, 192, 192, 255}},
-		{{ 1.0,  1.0, -1.0},  {  0, 192, 192, 255}},
-		{{-1.0,  1.0, -1.0},  {  0, 128, 128, 255}},
-		/* left  face */
-		{{-1.0, -1.0, -1.0},  {  0, 255,   0, 255}},
-		{{-1.0, -1.0,  1.0},  {  0, 192,   0, 255}},
-		{{-1.0,  1.0, -1.0},  {  0, 192,   0, 255}},
-		{{-1.0,  1.0,  1.0},  {  0, 128,   0, 255}},
-		/* right face */
-		{{ 1.0, -1.0,  1.0},  {255,   0, 255, 255}},
-		{{ 1.0, -1.0, -1.0},  {192,   0, 192, 255}},
-		{{ 1.0,  1.0,  1.0},  {192,   0, 192, 255}},
-		{{ 1.0,  1.0, -1.0},  {128,   0, 128, 255}},
-		/* top face */
-		{{-1.0,  1.0,  1.0},  {  0,   0, 255, 255}},
-		{{ 1.0,  1.0,  1.0},  {  0,   0, 192, 255}},
-		{{-1.0,  1.0, -1.0},  {  0,   0, 192, 255}},
-		{{ 1.0,  1.0, -1.0},  {  0,   0, 128, 255}},
-		/* bottom face */
-		{{ 1.0, -1.0,  1.0},  {255, 255,   0, 255}},
-		{{-1.0, -1.0,  1.0},  {192, 192,   0, 255}},
-		{{ 1.0, -1.0, -1.0},  {192, 192,   0, 255}},
-		{{-1.0, -1.0, -1.0},  {128, 128,   0, 255}},
+		{{0.0f, -1.0,  0.0},  			{255,   255,   0, 255}},
+		{{ 1.0/2.0, -1.0/2.0,  0.0},    {192,   255,   65, 255}},
+		{{ 0.0,  0.0,  1.0}, 		    {192,   255,   127, 255}},
+		{{ -1.0/2.0,  -1.0/2.0,  0.0},  {128,   255,   255, 255}}
 	};
 
 	/* use two triangles sharing an edge for each face */
 	static const GLushort cubeConnectivity[]={
-		 0, 1, 2,  2, 1, 3,	/* front */
-		 4, 5, 6,  6, 5, 7,	/* back */
-		 8, 9,10, 10, 9,11,	/* left */
-		12,13,14, 14,13,15,	/* right */
-		16,17,18, 18,17,19,	/* top */
-		20,21,22, 22,21,23	/* bottom */
-	};
-
-	static const GLfloat tetraVertex[] = {
-		0.0f, 1.0f, 0.0f,
-		1.0f/2.0f, -1.0f/2.0f, 0.0f,
-		0.0f, 0.0f, 1.0f,
-		1.0f/2.0f, -1.0f/2.0f, 0.0f
-
-	};
-
-	static const GLushort tetraIndices[] = {
-			2,1,0,
-			0,2,3,
-			0,3,1,
-			1,3,2
-	};
-
-	static const GLfloat tetraColors[] = {
-			1.0f, 1.0f, 1.0f, 1.0f, 
-			1.0f, 1.0f, 1.0f, 1.0f,
-			1.0f, 1.0f, 1.0f, 1.0f,
-			1.0f, 1.0f, 1.0f, 1.0f
+		 0,1,2,
+		 0,2,3,
+		 0,3,1,
+		 1,3,2
 	};
 
 	/* set up VAO and vertex and element array buffers */
@@ -652,15 +598,15 @@ static void initCube(Cube *cube)
 
 	glGenBuffers(2,cube->vbo);
 	glBindBuffer(GL_ARRAY_BUFFER, cube->vbo[0]);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(tetraVertex), &tetraVertex, GL_STATIC_DRAW);
-	info("Cube: created VBO %u for %u bytes of vertex data", cube->vbo[0], (unsigned)sizeof(tetraVertex));
+	glBufferData(GL_ARRAY_BUFFER, sizeof(cubeGeometry), cubeGeometry, GL_STATIC_DRAW);
+	info("Cube: created VBO %u for %u bytes of vertex data", cube->vbo[0], (unsigned)sizeof(cubeGeometry));
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, cube->vbo[1]);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(tetraIndices), &tetraIndices, GL_STATIC_DRAW);
-	info("Cube: created VBO %u for %u bytes of element data", cube->vbo[1], (unsigned)sizeof(tetraIndices));
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(cubeConnectivity), cubeConnectivity, GL_STATIC_DRAW);
+	info("Cube: created VBO %u for %u bytes of element data", cube->vbo[1], (unsigned)sizeof(cubeConnectivity));
 
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(tetraVertex), &tetraVertex);
-	glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, sizeof(tetraColors), &tetraColors);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), BUFFER_OFFSET(offsetof(Vertex,pos)));
+	glVertexAttribPointer(2, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vertex), BUFFER_OFFSET(offsetof(Vertex,clr)));
 
 	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(2);
@@ -920,7 +866,7 @@ drawScene(CubeApp *app)
 
 	/* draw the cube */
 	glBindVertexArray(app->cube.vao);
-	glDrawElements(GL_TRIANGLES, sizeof(tetraIndices), GL_UNSIGNED_SHORT, &tetraIndices);
+	glDrawElements(GL_TRIANGLES, 6 * 6, GL_UNSIGNED_SHORT, BUFFER_OFFSET(0));
 
 	/* "unbind" the VAO and the program. We do not have to do this.
 	* OpenGL is a state machine. The last binings will stay effective
