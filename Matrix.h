@@ -22,9 +22,10 @@ class Matrix {
     Matrix operator-(const Matrix &A);
     Matrix operator/(const Matrix &A);
     Matrix operator*(const Matrix& A);
-    Matrix operator=(const Matrix &A);
+    Matrix& operator=(const Matrix &A);
 
     // Deconstructor
+    ~Matrix();
 };
 
 #endif

@@ -121,7 +121,7 @@
 
         return res;      
     }
-    Matrix Matrix::operator=(const Matrix &A) {
+    Matrix& Matrix::operator=(const Matrix &A) {
 
         Matrix res;
 
@@ -142,4 +142,7 @@
 
     }
 
+    Matrix::~Matrix() {
+
+    }
 

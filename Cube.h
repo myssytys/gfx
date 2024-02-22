@@ -8,6 +8,7 @@ class Cube {
     float* vertices;
     int* indices;
     Cube();
+    ~Cube();
     
 };
 

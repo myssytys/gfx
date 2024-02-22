@@ -1,6 +1,8 @@
+#include "Tetra.h"
+
 #include <vector>
 
-#include "Tetra.h"
+
 
 	Tetra::Tetra(float edge) {
 
@@ -11,6 +13,13 @@
 			-edge/2, -edge/2.0f, 0.0f
 		};		
 		
+		std::vector<float> color {
+			1.0f, 1.0f, 1.0f, 1.0f,
+			1.0f, 1.0f, 1.0f, 1.0f,
+			1.0f, 1.0f, 1.0f, 1.0f,
+			1.04, 1.0f, 1.0f, 1.0f
+
+		};
 
 		std::vector<int> indices{
 			0,1,2,

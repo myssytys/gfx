@@ -77,3 +77,7 @@ Vector Vector::operator=(const Vector &a) {
 	res.z = z;
 	return res;
 }
+
+Vector::~Vector() {
+	
+}

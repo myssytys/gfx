@@ -116,4 +116,8 @@ using namespace std;
 		radius = r;
 	}
 
+	Sphere::~Sphere() {
+		
+	}
+
 

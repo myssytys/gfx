@@ -25,6 +25,7 @@ public:
     void generateIcosahedron(float size);
     float getRadius();
     void setRadius(float r);
+    ~Sphere();
 
 
 };
