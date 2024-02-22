@@ -12,6 +12,7 @@ public:
 	int* indices;
   // Tetra();
    Tetra(float edge);
+   ~Tetra();
 
 };
 
