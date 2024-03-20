@@ -1,7 +1,7 @@
 # Makefile for unix systems
 # this requires GNU make
 
-APPNAME=HelloCube
+APPNAME=main
 
 # Compiler flags
 # enable all warnings in general
@@ -26,7 +26,7 @@ CPPFLAGS += $(shell pkg-config --cflags glfw3)
 LDFLAGS += $(shell pkg-config --static --libs glfw3) 
 
 # additional libraries
-LDFLAGS += -lrt -lm
+LDFLAGS += -lrt -lm -lvulkan
 
 CFILES=$(wildcard *.c) glad/src/gl.c
 CPPFILES=$(wildcard *.cpp)
