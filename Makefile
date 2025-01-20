@@ -19,7 +19,7 @@ endif
 
 # include paths for the builtin libraries glad and glm. We do not link them,
 # as we directly incorporated the source code into our project
-CPPFLAGS += -I glad/include -I glm/
+CPPFLAGS += -I glm/
 
 # Try to find the system's GLFW3 library via pkg-config
 CPPFLAGS += $(shell pkg-config --cflags glfw3)
@@ -28,7 +28,7 @@ LDFLAGS += $(shell pkg-config --static --libs glfw3)
 # additional libraries
 LDFLAGS += -lrt -lm -lvulkan
 
-CFILES=$(wildcard *.c) glad/src/gl.c
+CFILES=$(wildcard *.c)
 CPPFILES=$(wildcard *.cpp)
 INCFILES=$(wildcard *.h)	
 SRCFILES = $(CFILES) $(CPPFILES)
