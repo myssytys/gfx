@@ -1,7 +1,7 @@
 #ifndef CUBE_H
 #define CUBE_H
 
-#include <glm/glm.hpp>
+#include "glm/glm/glm.hpp">
 #include <iostream>
 #include <vector>
 
