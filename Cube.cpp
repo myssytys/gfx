@@ -15,11 +15,11 @@ Cube::Cube(float size) {
          // Right-Down [0]
          {{1.0f*size, -1.0f*size,  1.0f*size},   {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}, {1.0f, 0.0f}},
             // Left-Down [1]
-         {{-1.0f*size, -1.0f*size,  1.0f*size},  {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}},
+         {{-1.0f*size, -1.0f*size,  1.0f*size},  {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}, {0.0f, 0.0f}},
          // Left-Up [2]
          {{-1.0f*size,  1.0f*size,  1.0f*size},  {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}},
          // Right-Up [3]
-         {{1.0f*size,  1.0f*size,  1.0f*size},   {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}, {0.0f, 0.0f}},
+         {{1.0f*size,  1.0f*size,  1.0f*size},   {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}},
         	// back face
          // Left Down [4]
          {{-1.0f*size, -1.0f*size, -1.0f*size},  {0.0f, 0.0f, -1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}, {1.0f, 0.0f}},
