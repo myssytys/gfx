@@ -37,7 +37,7 @@ const std::vector<const char*> deviceExtensions = {
     VK_KHR_SWAPCHAIN_EXTENSION_NAME
 };
 
-Cube cube = Cube();
+Cube cube = Cube(1.0f);
 
 #ifdef NDEBUG
 const bool enableValidationLayers = false;
@@ -127,32 +127,32 @@ struct UniformBufferObject {
 
 static const std::vector<Vertex> vertices = {
             // Vertices                 // Colors+Alpha     // Texcoord U+V
-		// front face 
+		// front face
 		{{-1.0f, -1.0f,  1.0f},  {1.0f, 1.0f, 1.0f, 1.0f}, {0.0f, 0.0f}},
 		{{1.0f, -1.0f,  1.0f},   {1.0f, 1.0f, 1.0f, 1.0f}, {1.0f, 0.0f}},
 		{{-1.0f,  1.0f,  1.0f},  {1.0f, 1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}},
 		{{1.0f,  1.0f,  1.0f},   {1.0f, 1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}},
-		 // back face 
+		 // back face
 		{{1.0f, -1.0f, -1.0f},   {1.0f, 1.0f, 1.0f, 1.0f}, {0.0f, 0.0f}},
 		{{-1.0f, -1.0f, -1.0f},  {1.0f, 1.0f, 1.0f, 1.0f}, {1.0f, 0.0f}},
 		{{1.0f,  1.0f, -1.0f},   {1.0f, 1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}},
 		{{-1.0f,  1.0f, -1.0f},  {1.0f, 1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}},
-		// left  face 
+		// left  face
 		{{-1.0f, -1.0f, -1.0f},  {1.0f, 1.0f, 1.0f, 1.0f}, {0.0f, 0.0f}},
 		{{-1.0f, -1.0f,  1.0f},  {1.0f, 1.0f, 1.0f, 1.0f}, {1.0f, 0.0f}},
 		{{-1.0f,  1.0f, -1.0f},  {1.0f, 1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}},
 		{{-1.0f,  1.0f,  1.0f},  {1.0f, 1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}},
-		// right face 
+		// right face
 		 {{1.0f, -1.0f,  1.0f},  {1.0f, 1.0f, 1.0f, 1.0f}, {0.0f, 0.0f}},
 		 {{1.0f, -1.0f, -1.0f},  {1.0f, 1.0f, 1.0f, 1.0f}, {1.0f, 0.0f}},
 		 {{1.0f,  1.0f,  1.0f},  {1.0f, 1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}},
 		 {{1.0f,  1.0f, -1.0f},  {1.0f, 1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}},
-		// top face 
+		// top face
 		{{-1.0f,  1.0f,  1.0},  {1.0f, 1.0f, 1.0f, 0.5f},  {0.0f, 0.0f}},
 		{{1.0f,  1.0f,  1.0},   {1.0f, 1.0f, 1.0f, 0.5f},  {1.0f, 0.0f}},
 		{{-1.0f,  1.0f, -1.0},  {1.0f, 1.0f, 1.0f, 0.5f},  {0.0f, 1.0f}},
 		{{1.0f,  1.0f, -1.0},   {1.0f, 1.0f, 1.0f, 0.5f},  {1.0f, 1.0f}},
-		// bottom face 
+		// bottom face
 		{{1.0f, -1.0f,  1.0f},   {1.0f, 1.0f, 1.0f, 1.0f}, {0.0f, 0.0f}},
 		{{-1.0f, -1.0f,  1.0f},  {1.0f, 1.0f, 1.0f, 1.0f}, {1.0f, 0.0f}},
 		{{1.0f, -1.0f, -1.0f},   {1.0f, 1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}},
@@ -666,7 +666,7 @@ private:
         rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
         rasterizer.lineWidth = 1.0f;
         rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
-        rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+        rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
         rasterizer.depthBiasEnable = VK_FALSE;
 
         VkPipelineMultisampleStateCreateInfo multisampling{};
@@ -952,7 +952,7 @@ private:
 
     void createVertexBuffer() {
             // Check this
-        VkDeviceSize bufferSize = sizeof(cube.Data) * cube.Data.size();        
+        VkDeviceSize bufferSize = sizeof(cube.Data) * cube.Data.size();
     //  std::cout << "Sizeof(vertices[0]); ->" << sizeof(vertices[0]) << "\n vertices.size() ->" << vertices.size();
 
         VkBuffer stagingBuffer;
