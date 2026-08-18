@@ -21,7 +21,7 @@ class Cube {
     std::vector<Vertex> Data;
     //glm::vec4 colors;
     //glm::vec2 texCoords;
-    Cube();
+    Cube(float size);
     ~Cube();
     
 };
