@@ -1,123 +1,131 @@
-#include <cmath>
-#include <cstdlib>
-#include <iostream>
-#include <string>
-#include <vector>
-
 #include "Sphere.h"
 
-using namespace std;
+#include <algorithm>
+#include <cmath>
 
-#define PI 3.14159265358979323846
+#define PI 3.14159265358979323846f
 
-	// Constructor
-	Sphere::Sphere(float centerX, float centerY, float centerZ, float radius, int hseg, int vseg) {
+Sphere::Sphere(float radius, int hseg, int vseg)
+    : phi(0.0f), dphi(0.0f), theta(0.0f), dtheta(0.0f), hseg(hseg), vseg(vseg),
+      radius(radius), centerX(0.0f), centerY(0.0f), centerZ(0.0f) {
+  UVSphere();
+}
 
+Sphere::Sphere(float centerX, float centerY, float centerZ, float radius,
+               int hseg, int vseg)
+    : phi(0.0f), dphi(0.0f), theta(0.0f), dtheta(0.0f), hseg(hseg), vseg(vseg),
+      radius(radius), centerX(centerX), centerY(centerY), centerZ(centerZ) {
+  UVSphere();
+}
 
-		phi = 0.0f;
-		theta = 0.0f;
-		dphi = 2*PI/(vseg-1);
-		dtheta = PI/(hseg-1);
+Sphere::~Sphere() {}
 
-		vertices = new float[vseg*hseg];
-		indices = new int[vseg*hseg];
-		//icoindices = new int[120];
-		edge = new Edge[60];
-		this->radius = radius;
-	}
+void Sphere::UVSphere() {
+  Data.clear();
+  indices.clear();
+  texCoords.clear();
 
-	void Sphere::UVSphere() {
+  if (hseg < 3)
+    hseg = 3;
+  if (vseg < 2)
+    vseg = 2;
 
-		int i,j;
+  dtheta = 2.0f * PI / static_cast<float>(hseg);
+  dphi = PI / static_cast<float>(vseg);
 
-		dtheta = 2.0 * PI / (vseg - 1);	
-		dphi = PI / (hseg - 1);
+  // Generate vertices (vseg + 1 rows, hseg + 1 columns)
+  for (int i = 0; i <= vseg; ++i) {
+    float latFraction = static_cast<float>(i) / static_cast<float>(vseg);
+    float currentPhi = latFraction * PI; // 0 at north pole (+Y) to PI at south pole (-Y)
+    float v = 1.0f - latFraction;        // 1.0 at north pole (+Y), 0.0 at south pole (-Y)
 
-		for(i=0; i<hseg; i++) {
+    float sinPhi = std::sin(currentPhi);
+    float cosPhi = std::cos(currentPhi);
 
-			theta += dtheta;
+    for (int j = 0; j <= hseg; ++j) {
+      float u = static_cast<float>(j) / static_cast<float>(hseg);
+      float currentTheta = u * 2.0f * PI; // 0 to 2*PI
 
-			for(j=0;j<vseg;j++) {
+      float sinTheta = std::sin(currentTheta);
+      float cosTheta = std::cos(currentTheta);
 
-				phi += dphi;
+      glm::vec3 normal(sinPhi * cosTheta, cosPhi, sinPhi * sinTheta);
+      glm::vec3 pos = glm::vec3(centerX, centerY, centerZ) + normal * radius;
+      glm::vec4 color(1.0f, 1.0f, 1.0f, 1.0f);
+      glm::vec2 texCoord(u, v);
 
-				vertices[i*j] = sin(phi) * cos(theta);
-				vertices[i*j] = sin(phi) * sin(theta);
-				vertices[i*j] = cos(phi);
+      texCoords.push_back(texCoord);
+      Data.push_back({pos, normal, color, texCoord});
+    }
+  }
 
+  // Generate indices with Clockwise winding order for Vulkan
+  for (int i = 0; i < vseg; ++i) {
+    for (int j = 0; j < hseg; ++j) {
+      uint16_t current = static_cast<uint16_t>(i * (hseg + 1) + j);
+      uint16_t next = static_cast<uint16_t>((i + 1) * (hseg + 1) + j);
 
-			}
+      // Top triangle (omitted at north pole where current & current+1 coincide)
+      if (i != 0) {
+        indices.push_back(current);
+        indices.push_back(static_cast<uint16_t>(current + 1));
+        indices.push_back(static_cast<uint16_t>(next + 1));
+      }
 
+      // Bottom triangle (omitted at south pole where next & next+1 coincide)
+      if (i != vseg - 1) {
+        indices.push_back(current);
+        indices.push_back(static_cast<uint16_t>(next + 1));
+        indices.push_back(next);
+      }
+    }
+  }
+}
 
+void Sphere::generateIcosahedron(float size) {
+  Data.clear();
+  indices.clear();
+  edges.clear();
+  texCoords.clear();
 
-		}
+  float icosahedronPhi = (1.0f + std::sqrt(5.0f)) / 2.0f;
 
-	}
+  std::vector<glm::vec3> basePositions = {
+      {-1.0f, icosahedronPhi, 0.0f},  {1.0f, icosahedronPhi, 0.0f},
+      {-1.0f, -icosahedronPhi, 0.0f}, {1.0f, -icosahedronPhi, 0.0f},
+      {0.0f, -1.0f, icosahedronPhi},  {0.0f, 1.0f, icosahedronPhi},
+      {0.0f, -1.0f, -icosahedronPhi}, {0.0f, 1.0f, -icosahedronPhi},
+      {icosahedronPhi, 0.0f, -1.0f},  {icosahedronPhi, 0.0f, 1.0f},
+      {-icosahedronPhi, 0.0f, -1.0f}, {-icosahedronPhi, 0.0f, 1.0f}};
 
-	void Sphere::generateIcosahedron(float size) {
+  for (const auto &pos : basePositions) {
+    glm::vec3 normal = glm::normalize(pos);
+    glm::vec3 p = glm::vec3(centerX, centerY, centerZ) + normal * size;
+    glm::vec4 color(1.0f, 1.0f, 1.0f, 1.0f);
+    float u = 0.5f + std::atan2(normal.z, normal.x) / (2.0f * PI);
+    float v = 0.5f + std::asin(std::clamp(normal.y, -1.0f, 1.0f)) / PI;
+    glm::vec2 texCoord(u, v);
 
-  	float phi = (1.0 + sqrt(5.0)) / 2.0;
+    texCoords.push_back(texCoord);
+    Data.push_back({p, normal, color, texCoord});
+  }
 
-	std::vector<float> icovertex{
+  // 20 triangular faces with clockwise winding order
+  indices = {0, 5, 11, 0, 1,  5,  0,  7,  1,  0,  10, 7, 0, 11, 10,
+             1, 9, 5,  5, 4,  11, 11, 2,  10, 10, 6,  7, 7, 8,  1,
+             3, 4, 9,  3, 2,  4,  3,  6,  2,  3,  8,  6, 3, 9,  8,
+             4, 5, 9,  2, 11, 4,  6,  10, 2,  8,  7,  6, 9, 1,  8};
 
-		-1.0f,  phi,  0.0f,  1.0f,  phi,  0.0f, -1.0f, -phi,  0.0f, 
-		 1.0f, -phi,  0.0f,  0.0f, -1.0f,  phi,  0.0f,  1.0f,  phi, 
-		 0.0f, -1.0f, -phi,  0.0f,  1.0f , -phi, phi,  0.0f, -1.0f, 
-		 phi,  0.0f,  1.0f, -phi,  0.0f, -1.0f, -phi,  0.0f,  1.0f
-	
-	};
+  // 30 unique edges
+  edges = {{0, 1}, {0, 5},  {0, 7}, {0, 10}, {0, 11}, {1, 5},  {1, 7},  {1, 8},
+           {1, 9}, {2, 3},  {2, 4}, {2, 6},  {2, 10}, {2, 11}, {3, 4},  {3, 6},
+           {3, 8}, {3, 9},  {4, 5}, {4, 9},  {4, 11}, {5, 9},  {5, 11}, {6, 7},
+           {6, 8}, {6, 10}, {7, 8}, {7, 10}, {8, 9},  {10, 11}};
+}
 
-	std::vector<int> icoindices{
-		0, 11, 5,  0, 5,  1,  0, 1, 7,  0,  7, 10, 0, 10, 11,
-        1, 5,  9,  5, 11, 4,  11,10,2,  10, 7, 6,  7, 1, 8,
-        3, 9,  4,  3, 4,  2,  3, 2, 6,  3,  6, 8,  3, 8, 9,
-        4, 9,  5,  2, 4,  11, 6, 2, 10, 8,  6, 7,  9, 8, 1
-	};
+float Sphere::getRadius() const { return radius; }
 
-
-    edge[0].a=0; edge[0].b=1;
-	edge[1].a=0; edge[1].b=4;
-	edge[2].a=0; edge[2].b=5;
-	edge[3].a=0; edge[3].b=8;
-	edge[4].a=0; edge[4].b=10;
-	edge[5].a=1; edge[5].b=6;
-	edge[6].a=1; edge[6].b=7;
-	edge[7].a=1; edge[7].b=8;
-	edge[8].a=1; edge[8].b=10;
-	edge[9].a=2; edge[9].b=3;
-	edge[10].a=2; edge[10].b=4;
-	edge[11].a=2; edge[11].b=5;
-	edge[12].a=2; edge[12].b=9;
-	edge[13].a=2; edge[13].b=11;
-	edge[14].a=3; edge[14].b=6;
-	edge[15].a=3; edge[15].b=7;
-	edge[16].a=3; edge[16].b=9;
-	edge[17].a=3; edge[17].b=11;
-	edge[18].a=4; edge[18].b=5;
-	edge[19].a=4; edge[19].b=8;
-	edge[20].a=4; edge[20].b=9;
-	edge[21].a=5; edge[21].b=10;
-	edge[22].a=5; edge[22].b=11;
-	edge[23].a=6; edge[23].b=7;
-	edge[24].a=6; edge[24].b=8;
-	edge[25].a=6; edge[25].b=9;
-	edge[26].a=7; edge[26].b=10;
-	edge[27].a=7; edge[27].b=11;
-	edge[28].a=8; edge[28].b=9;
-	edge[29].a=10; edge[29].b=11;
-	
-	
-	}
-
-	float Sphere::getRadius() {
-		return radius;
-	}
-	void Sphere::setRadius(float r) {
-		radius = r;
-	}
-
-	Sphere::~Sphere() {
-		
-	}
-
-
+void Sphere::setRadius(float r) {
+  radius = r;
+  UVSphere();
+}
