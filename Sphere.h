@@ -30,20 +30,29 @@ public:
   float dtheta;
   int hseg;
   int vseg;
+  int subdivisions;
   float radius;
   float centerX;
   float centerY;
   float centerZ;
 
-  Sphere(float radius = 1.0f, int hseg = 32, int vseg = 32);
+  Sphere(float radius = 1.0f, int subdivisions = 3);
   Sphere(float centerX, float centerY, float centerZ, float radius = 1.0f,
-         int hseg = 32, int vseg = 32);
+         int subdivisions = 3);
+  Sphere(float radius, int hseg, int vseg);
+  Sphere(float centerX, float centerY, float centerZ, float radius,
+         int hseg, int vseg);
   ~Sphere();
 
   void UVSphere();
   void generateIcosahedron(float size);
+  void generateIcosasphere(float radius, int subdivisions = 3);
+  void generateIcosasphere(float cx, float cy, float cz, float radius,
+                           int subdivisions = 3);
   float getRadius() const;
   void setRadius(float r);
+  int getSubdivisions() const;
+  void setSubdivisions(int subs);
 };
 
 #endif
