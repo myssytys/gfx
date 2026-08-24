@@ -24,9 +24,14 @@
 #include <vector>
 
 #include "Cube.h"
+#include "Deca.h"
+#include "Icosa.h"
+#include "Octa.h"
+#include "Sphere.h"
+#include "Tetra.h"
 
-const uint32_t WIDTH = 800;
-const uint32_t HEIGHT = 600;
+const uint32_t WIDTH = 1024;
+const uint32_t HEIGHT = 768;
 
 const int MAX_FRAMES_IN_FLIGHT = 2;
 
@@ -37,6 +42,11 @@ const std::vector<const char *> deviceExtensions = {
     VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 
 Cube cube = Cube(1.0f);
+Tetra tetra = Tetra(1.0f);
+Sphere sphere = Sphere(1.0f, 64, 64);
+Octa octa = Octa(1.0f);
+Deca deca = Deca(1.0f);
+Icosa icosa = Icosa(1.0f);
 
 #ifdef NDEBUG
 const bool enableValidationLayers = false;
@@ -82,12 +92,6 @@ struct SwapChainSupportDetails {
   std::vector<VkPresentModeKHR> presentModes;
 };
 
-/*struct Vertex {
-    glm::vec3 pos;
-    glm::vec4 color;
-    glm::vec2 texCoord;
-};*/
-
 struct Vertex {
   glm::vec3 pos;
   glm::vec4 color;
@@ -96,7 +100,7 @@ struct Vertex {
   static VkVertexInputBindingDescription getBindingDescription() {
     VkVertexInputBindingDescription bindingDescription{};
     bindingDescription.binding = 0;
-    bindingDescription.stride = sizeof(Cube::Vertex);
+    bindingDescription.stride = sizeof(Icosa::Vertex);
     bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
     return bindingDescription;
@@ -109,17 +113,17 @@ struct Vertex {
     attributeDescriptions[0].binding = 0;
     attributeDescriptions[0].location = 0;
     attributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-    attributeDescriptions[0].offset = offsetof(Cube::Vertex, pos);
+    attributeDescriptions[0].offset = offsetof(Icosa::Vertex, pos);
 
     attributeDescriptions[1].binding = 0;
     attributeDescriptions[1].location = 1;
     attributeDescriptions[1].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-    attributeDescriptions[1].offset = offsetof(Cube::Vertex, colors);
+    attributeDescriptions[1].offset = offsetof(Icosa::Vertex, colors);
 
     attributeDescriptions[2].binding = 0;
     attributeDescriptions[2].location = 2;
     attributeDescriptions[2].format = VK_FORMAT_R32G32_SFLOAT;
-    attributeDescriptions[2].offset = offsetof(Cube::Vertex, texCoords);
+    attributeDescriptions[2].offset = offsetof(Icosa::Vertex, texCoords);
 
     return attributeDescriptions;
   }
@@ -129,48 +133,6 @@ struct UniformBufferObject {
   alignas(16) glm::mat4 model;
   alignas(16) glm::mat4 view;
   alignas(16) glm::mat4 proj;
-};
-
-static const std::vector<Vertex> vertices = {
-    // Vertices                 // Colors+Alpha     // Texcoord U+V
-    // front face
-    {{-1.0f, -1.0f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}, {0.0f, 0.0f}},
-    {{1.0f, -1.0f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}, {1.0f, 0.0f}},
-    {{-1.0f, 1.0f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}},
-    {{1.0f, 1.0f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}},
-    // back face
-    {{1.0f, -1.0f, -1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}, {0.0f, 0.0f}},
-    {{-1.0f, -1.0f, -1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}, {1.0f, 0.0f}},
-    {{1.0f, 1.0f, -1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}},
-    {{-1.0f, 1.0f, -1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}},
-    // left  face
-    {{-1.0f, -1.0f, -1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}, {0.0f, 0.0f}},
-    {{-1.0f, -1.0f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}, {1.0f, 0.0f}},
-    {{-1.0f, 1.0f, -1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}},
-    {{-1.0f, 1.0f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}},
-    // right face
-    {{1.0f, -1.0f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}, {0.0f, 0.0f}},
-    {{1.0f, -1.0f, -1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}, {1.0f, 0.0f}},
-    {{1.0f, 1.0f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}},
-    {{1.0f, 1.0f, -1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}},
-    // top face
-    {{-1.0f, 1.0f, 1.0}, {1.0f, 1.0f, 1.0f, 0.5f}, {0.0f, 0.0f}},
-    {{1.0f, 1.0f, 1.0}, {1.0f, 1.0f, 1.0f, 0.5f}, {1.0f, 0.0f}},
-    {{-1.0f, 1.0f, -1.0}, {1.0f, 1.0f, 1.0f, 0.5f}, {0.0f, 1.0f}},
-    {{1.0f, 1.0f, -1.0}, {1.0f, 1.0f, 1.0f, 0.5f}, {1.0f, 1.0f}},
-    // bottom face
-    {{1.0f, -1.0f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}, {0.0f, 0.0f}},
-    {{-1.0f, -1.0f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}, {1.0f, 0.0f}},
-    {{1.0f, -1.0f, -1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}},
-    {{-1.0f, -1.0f, -1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}}};
-
-const std::vector<uint16_t> indices = {
-    0,  1,  2,  2,  1,  3,  /* front */
-    4,  5,  6,  6,  5,  7,  /* back */
-    8,  9,  10, 10, 9,  11, /* left */
-    12, 13, 14, 14, 13, 15, /* right */
-    16, 17, 18, 18, 17, 19, /* top */
-    20, 21, 22, 22, 21, 23  /* bottom */
 };
 
 class HelloTriangleApplication {
@@ -864,8 +826,12 @@ private:
 
   void createTextureImage() {
     int texWidth, texHeight, texChannels;
-    stbi_uc *pixels = stbi_load("textures/texture.jpg", &texWidth, &texHeight,
+    stbi_uc *pixels = stbi_load("textures/textures.jpg", &texWidth, &texHeight,
                                 &texChannels, STBI_rgb_alpha);
+    if (!pixels) {
+      pixels = stbi_load("textures/texture.jpg", &texWidth, &texHeight,
+                         &texChannels, STBI_rgb_alpha);
+    }
     VkDeviceSize imageSize = texWidth * texHeight * 4;
 
     if (!pixels) {
@@ -1106,7 +1072,7 @@ private:
   }
 
   void createVertexBuffer() {
-    VkDeviceSize bufferSize = sizeof(cube.Data[0]) * cube.Data.size();
+    VkDeviceSize bufferSize = sizeof(icosa.Data[0]) * icosa.Data.size();
     //  std::cout << "Sizeof(vertices[0]); ->" << sizeof(vertices[0]) << "\n
     //  vertices.size() ->" << vertices.size();
 
@@ -1119,7 +1085,7 @@ private:
 
     void *data;
     vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
-    memcpy(data, cube.Data.data(), (size_t)bufferSize);
+    memcpy(data, icosa.Data.data(), (size_t)bufferSize);
     vkUnmapMemory(device, stagingBufferMemory);
 
     createBuffer(
@@ -1134,7 +1100,7 @@ private:
   }
 
   void createIndexBuffer() {
-    VkDeviceSize bufferSize = sizeof(cube.indices[0]) * cube.indices.size();
+    VkDeviceSize bufferSize = sizeof(icosa.indices[0]) * icosa.indices.size();
 
     VkBuffer stagingBuffer;
     VkDeviceMemory stagingBufferMemory;
@@ -1145,7 +1111,7 @@ private:
 
     void *data;
     vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
-    memcpy(data, cube.indices.data(), (size_t)bufferSize);
+    memcpy(data, icosa.indices.data(), (size_t)bufferSize);
     vkUnmapMemory(device, stagingBufferMemory);
 
     createBuffer(
@@ -1403,7 +1369,7 @@ private:
                             pipelineLayout, 0, 1, &descriptorSets[currentFrame],
                             0, nullptr);
 
-    vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(cube.indices.size()),
+    vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(icosa.indices.size()),
                      1, 0, 0, 0);
 
     vkCmdEndRenderPass(commandBuffer);
