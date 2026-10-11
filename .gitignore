@@ -1,0 +1,15 @@
+# Build artifacts
+*.o
+main
+
+# Generated dependencies
+dep/
+
+# Editor and IDE configurations
+.zed/
+.vscode/
+.idea/
+
+# Backup and temp files
+*.bak
+*~

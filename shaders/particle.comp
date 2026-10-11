@@ -1,0 +1,105 @@
+#version 450
+
+layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
+
+struct Particle {
+    vec4 pos;   // xyz = position, w = current life
+    vec4 vel;   // xyz = velocity, w = max life
+    vec4 color; // rgba
+    vec4 scale; // x = size, y = rotation, z = rotSpeed, w = unused
+};
+
+layout(std430, binding = 0) readonly buffer ParticleBufferIn {
+    Particle particlesIn[];
+};
+
+layout(std430, binding = 1) writeonly buffer ParticleBufferOut {
+    Particle particlesOut[];
+};
+
+layout(push_constant) uniform ComputeParams {
+    vec4 attractorPos; // xyz = attractor position, w = attractor strength
+    float deltaTime;
+    float time;
+    uint particleCount;
+    float padding;
+} params;
+
+// Fast integer hash for pseudo-random number generation on GPU
+float hash(uint n) {
+    n = (n << 13U) ^ n;
+    n = n * (n * n * 15731U + 789221U) + 1376312589U;
+    return float(n & 0x7fffffffU) / float(0x7fffffff);
+}
+
+void main() {
+    uint index = gl_GlobalInvocationID.x;
+    if (index >= params.particleCount) {
+        return;
+    }
+
+    Particle p = particlesIn[index];
+
+    // Increment particle life
+    p.pos.w += params.deltaTime;
+
+    // Check if particle expired
+    if (p.pos.w >= p.vel.w || p.vel.w <= 0.0) {
+        // Respawn particle at emitter origin with pseudo-random properties
+        float r1 = hash(index + uint(params.time * 1000.0) + 1337U);
+        float r2 = hash(index * 3U + uint(params.time * 1000.0) + 7919U);
+        float r3 = hash(index * 7U + uint(params.time * 1000.0) + 104729U);
+        float r4 = hash(index * 13U + uint(params.time * 1000.0) + 48611U);
+
+        // Spawn in a small disk/sphere at origin
+        float theta = r1 * 6.2831853;
+        float radius = r2 * 0.2;
+        p.pos.x = radius * cos(theta);
+        p.pos.y = (r4 - 0.5) * 0.1;
+        p.pos.z = radius * sin(theta);
+        p.pos.w = 0.0; // Reset life
+
+        // Random upward cone velocity
+        float speed = 1.5 + r3 * 2.5;
+        p.vel.x = (r1 - 0.5) * 1.5;
+        p.vel.y = 1.0 + r2 * 2.0;
+        p.vel.z = (r3 - 0.5) * 1.5;
+        p.vel.xyz = normalize(p.vel.xyz) * speed;
+        p.vel.w = 1.5 + r4 * 2.5; // Lifetime between 1.5s and 4.0s
+
+        // Color: Glowing cyan/blue gradient based on r1 and r2
+        p.color = vec4(0.1 + 0.2 * r1, 0.5 + 0.4 * r2, 1.0, 1.0);
+        p.scale.x = 0.04 + r3 * 0.04; // Size
+        p.scale.y = r1 * 6.2831853;   // Initial angle
+        p.scale.z = (r2 - 0.5) * 4.0; // Rotation speed
+    } else {
+        // Physics update
+        vec3 gravity = vec3(0.0, -1.5, 0.0);
+
+        // Gravitational Attractor Force
+        vec3 toAttractor = params.attractorPos.xyz - p.pos.xyz;
+        float dist = max(length(toAttractor), 0.2);
+        vec3 attractorForce = normalize(toAttractor) * (params.attractorPos.w / (dist * dist));
+
+        // Air drag
+        p.vel.xyz *= max(0.0, 1.0 - 0.3 * params.deltaTime);
+        p.vel.xyz += (gravity + attractorForce) * params.deltaTime;
+        p.pos.xyz += p.vel.xyz * params.deltaTime;
+
+        // Rotation
+        p.scale.y += p.scale.z * params.deltaTime;
+
+        // Lifetime normalization (0.0 -> 1.0)
+        float lifeRatio = clamp(p.pos.w / p.vel.w, 0.0, 1.0);
+
+        // Alpha fade out near end of life
+        p.color.a = 1.0 - lifeRatio;
+
+        // Color shift from bright glowing cyan/blue to deep indigo/midnight blue
+        p.color.r = mix(0.1, 0.2, lifeRatio);
+        p.color.g = mix(0.7, 0.05, lifeRatio);
+        p.color.b = mix(1.0, 0.6, lifeRatio);
+    }
+
+    particlesOut[index] = p;
+}

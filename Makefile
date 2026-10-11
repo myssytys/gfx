@@ -19,7 +19,7 @@ endif
 
 # include paths for the builtin libraries glad and glm. We do not link them,
 # as we directly incorporated the source code into our project
-CPPFLAGS += -I glad/include -I glm/
+CPPFLAGS += -I glm/
 
 # Try to find the system's GLFW3 library via pkg-config
 CPPFLAGS += $(shell pkg-config --cflags glfw3)
@@ -28,7 +28,7 @@ LDFLAGS += $(shell pkg-config --static --libs glfw3)
 # additional libraries
 LDFLAGS += -lrt -lm -lvulkan
 
-CFILES=$(wildcard *.c) glad/src/gl.c
+CFILES=$(wildcard *.c)
 CPPFILES=$(wildcard *.cpp)
 INCFILES=$(wildcard *.h)	
 SRCFILES = $(CFILES) $(CPPFILES)
@@ -37,8 +37,25 @@ ALLFILES = $(SRCFILES) $(INCFILES) $(PRJFILES)
 OBJECTS = $(patsubst %.cpp,%.o,$(CPPFILES)) $(patsubst %.c,%.o,$(CFILES))
 	   
 # build rules
-.PHONY: all
-all:	$(APPNAME)
+.PHONY: all shaders
+all:	shaders $(APPNAME)
+
+shaders: shaders/vert.spv shaders/frag.spv shaders/particle_comp.spv shaders/particle_vert.spv shaders/particle_frag.spv
+
+shaders/vert.spv: shaders/26_shader_textures.vert
+	glslc $< -o $@
+
+shaders/frag.spv: shaders/26_shader_textures.frag
+	glslc $< -o $@
+
+shaders/particle_comp.spv: shaders/particle.comp
+	glslc $< -o $@
+
+shaders/particle_vert.spv: shaders/particle.vert
+	glslc $< -o $@
+
+shaders/particle_frag.spv: shaders/particle.frag
+	glslc $< -o $@
 
 # build and start with "make run"
 .PHONY: run
