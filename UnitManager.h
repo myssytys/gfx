@@ -58,8 +58,8 @@ public:
   uint32_t indexCount = 0;
 
   static const size_t MAX_UNITS = 64;
-  static const size_t MAX_VERTICES = 4096;
-  static const size_t MAX_INDICES = 8192;
+  static const size_t MAX_VERTICES = 65536;
+  static const size_t MAX_INDICES = 131072;
 
   UnitManager();
   ~UnitManager();
@@ -115,6 +115,18 @@ private:
   void addSelectionRing(const glm::vec3 &pos, const glm::vec3 &normal,
                         float totalTime,
                         std::vector<Sphere::Vertex> &verts, std::vector<uint16_t> &indices);
+
+  void addMineMesh(const Sphere::HexTile &tile, float totalTime,
+                   std::vector<Sphere::Vertex> &verts, std::vector<uint16_t> &indices);
+
+  void addDeepCoreMesh(const Sphere::HexTile &tile, float totalTime,
+                       std::vector<Sphere::Vertex> &verts, std::vector<uint16_t> &indices);
+
+  void addSolarArrayMesh(const Sphere::HexTile &tile, float totalTime,
+                         std::vector<Sphere::Vertex> &verts, std::vector<uint16_t> &indices);
+
+  void addOreDepositMesh(const Sphere::HexTile &tile, float totalTime,
+                         std::vector<Sphere::Vertex> &verts, std::vector<uint16_t> &indices);
 };
 
 #endif

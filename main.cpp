@@ -31,6 +31,7 @@
 #include "Sphere.h"
 #include "Tetra.h"
 #include "UnitManager.h"
+#include "EconomyManager.h"
 
 const uint32_t WIDTH = 1024;
 const uint32_t HEIGHT = 768;
@@ -218,6 +219,7 @@ private:
   glm::mat4 currentProjMatrix{1.0f};
 
   UnitManager unitManager;
+  EconomyManager economyManager;
   std::vector<int> reachableTiles;
 
   int hoveredTileId = -1;
@@ -245,21 +247,27 @@ private:
   void updateWindowTitle() {
     if (!window) return;
     char title[256];
+    std::string stock = economyManager.getStockpileString();
     if (Unit *u = unitManager.getSelectedUnit()) {
       snprintf(title, sizeof(title),
-               "Hex Planet Strategy | Turn %d | Unit: %s #%d [MP: %d/%d, HP: %d/%d] on %s (#%d) | [L/R-Click] Move  [Tab] Cycle  [Enter] Next Turn",
-               unitManager.currentTurn, u->name.c_str(), u->id, u->movementPoints,
-               u->maxMovementPoints, u->health, u->maxHealth,
-               getTerrainName(planet.hexTiles[u->tileId].terrainType), u->tileId);
-    } else if (selectedTileId != -1) {
+               "Hex Planet | Turn %d | %s | Unit: %s #%d [MP:%d/%d] on %s (#%d)",
+               economyManager.currentTurn, stock.c_str(), u->name.c_str(), u->id,
+               u->movementPoints, u->maxMovementPoints,
+               Sphere::getTerrainName(planet.hexTiles[u->tileId].terrainType).c_str(), u->tileId);
+    } else if (selectedTileId != -1 && selectedTileId < static_cast<int>(planet.hexTiles.size())) {
+      const auto &tile = planet.hexTiles[selectedTileId];
+      std::string resStr = (tile.deposit.type != Sphere::ResourceType::NONE) ?
+                           ("[" + Sphere::getResourceName(tile.deposit.type) + ": " + std::to_string(tile.deposit.reserves) + "]") : "[Barren]";
+      std::string structStr = (tile.structure.type != Sphere::StructureType::NONE) ?
+                              (" | " + Sphere::getStructureName(tile.structure.type)) : "";
       snprintf(title, sizeof(title),
-               "Hex Planet Strategy | Turn %d | Selected Tile #%d (%s) | [Tab] Select Unit  [Enter] Next Turn",
-               unitManager.currentTurn, selectedTileId,
-               getTerrainName(planet.hexTiles[selectedTileId].terrainType));
+               "Hex Planet | Turn %d | %s | Tile #%d (%s) %s%s",
+               economyManager.currentTurn, stock.c_str(), selectedTileId,
+               Sphere::getTerrainName(tile.terrainType).c_str(), resStr.c_str(), structStr.c_str());
     } else {
       snprintf(title, sizeof(title),
-               "Hex Planet Strategy | Turn %d | [L-Click] Select Unit / Tile  [Tab] Cycle Units  [Space] Auto-Rotate",
-               unitManager.currentTurn);
+               "Hex Planet Strategy | Turn %d | %s | [L-Click] Move/Select | [M] Mine | [Enter] Next Turn",
+               economyManager.currentTurn, stock.c_str());
     }
     glfwSetWindowTitle(window, title);
   }
@@ -303,8 +311,12 @@ private:
     std::cout << "  Stats:    MP: " << u->movementPoints << "/" << u->maxMovementPoints
               << " | HP: " << u->health << "/" << u->maxHealth << "\n";
     std::cout << "  Reachable Tiles: " << reachableTiles.size() << " hexes in range.\n";
-    std::cout << "  Actions:  [L/R-Click] Reachable Tile to Move | [Tab] Cycle Unit | [Enter] Next Turn\n";
+    if (u->type == UnitType::SETTLER) {
+      std::cout << "  Settler Actions: [M] Build Mine (40 Fe, 20 Pwr) | [B] Build Solar Array (50 Fe)\n";
+    }
+    std::cout << "  General Controls: [L/R-Click] Move Unit | [Tab] Cycle Units | [Enter/N] Next Turn\n";
     std::cout << "=========================================\n" << std::endl;
+    updateWindowTitle();
   }
 
   void selectTileOnly(int hit) {
@@ -316,34 +328,16 @@ private:
     planet.setTileColor(selectedTileId, glm::vec4(1.0f, 0.85f, 0.15f, 1.0f), vertexBufferMapped);
 
     const auto &tile = planet.hexTiles[selectedTileId];
-    Unit *unitOnTile = unitManager.getUnitAtTile(hit);
-
-    std::cout << "\n=========================================\n";
-    std::cout << ">>> INSPECTED TILE #" << tile.id << "\n";
-    std::cout << "  Geometry: " << (tile.isPentagon ? "PENTAGON (5 neighbors)" : "HEXAGON (6 neighbors)") << "\n";
-    std::cout << "  Terrain:  " << getTerrainName(tile.terrainType) << "\n";
-    if (unitOnTile) {
-      std::cout << "  Occupant: " << unitOnTile->name << " (Owner: "
-                << (unitOnTile->owner == 0 ? "Player" : "Rival Faction") << ", HP: "
-                << unitOnTile->health << "/" << unitOnTile->maxHealth << ", MP: "
-                << unitOnTile->movementPoints << "/" << unitOnTile->maxMovementPoints << ")\n";
-    } else {
-      std::cout << "  Occupant: None\n";
-    }
-    std::cout << "  Adjacency & Movement Paths:\n";
+    economyManager.printInspection(tile, selectedTileId);
+    updateWindowTitle();
 
     for (size_t dir = 0; dir < tile.neighbors.size(); ++dir) {
       int nId = tile.neighbors[dir];
       if (nId >= 0 && nId < static_cast<int>(planet.hexTiles.size())) {
         highlightedNeighbors.push_back(nId);
         planet.setTileColor(nId, glm::vec4(0.35f, 0.95f, 0.45f, 1.0f), vertexBufferMapped);
-
-        const auto &nTile = planet.hexTiles[nId];
-        std::cout << "    [Dir " << dir << "] -> Tile #" << nId << " ("
-                  << getTerrainName(nTile.terrainType) << ")\n";
       }
     }
-    std::cout << "=========================================\n" << std::endl;
   }
 
   void onTileClicked(int hit, bool isRightClick) {
@@ -530,18 +524,155 @@ private:
       std::cout << "[HexPlanet] Auto-rotation: " << (app->autoRotate ? "ON" : "PAUSED") << "\n";
     } else if (key == GLFW_KEY_ENTER || key == GLFW_KEY_N) {
       app->unitManager.nextTurn();
+      app->economyManager.processTurn(planet);
       if (app->unitManager.selectedUnitId != -1) {
         app->selectUnitById(app->unitManager.selectedUnitId);
       }
-    } else if (key == GLFW_KEY_TAB || key == GLFW_KEY_U) {
+      app->updateWindowTitle();
+    } else if (key == GLFW_KEY_TAB) {
       int nextId = app->unitManager.selectNextPlayerUnit();
       if (nextId != -1) {
         app->selectUnitById(nextId);
       }
+    } else if (key == GLFW_KEY_M) {
+      // Build Surface Mine
+      int targetTile = -1;
+      Unit *selectedUnit = app->unitManager.getSelectedUnit();
+      if (selectedUnit) {
+        targetTile = selectedUnit->tileId;
+      } else {
+        targetTile = app->selectedTileId;
+      }
+
+      if (targetTile < 0 || targetTile >= static_cast<int>(planet.hexTiles.size())) {
+        std::cout << "[Construction] Please select a tile or unit first.\n";
+      } else {
+        Unit *unitOnTile = app->unitManager.getUnitAtTile(targetTile);
+        bool hasSettler = (unitOnTile && unitOnTile->owner == 0 && unitOnTile->type == UnitType::SETTLER);
+        if (!hasSettler) {
+          std::cout << "[Construction] Building a Mine requires a Settler/Worker on the tile (Tile #" << targetTile << ").\n";
+        } else {
+          std::string msg;
+          if (app->economyManager.buildMine(planet.hexTiles[targetTile], msg)) {
+            unitOnTile->movementPoints = 0; // Consume action
+            std::cout << "[Construction SUCCESS] " << msg << "\n";
+            app->economyManager.printInspection(planet.hexTiles[targetTile], targetTile);
+            app->updateWindowTitle();
+          } else {
+            std::cout << "[Construction FAILED] " << msg << "\n";
+          }
+        }
+      }
+    } else if (key == GLFW_KEY_U) {
+      // Upgrade Mine to Deep Core Extractor
+      int targetTile = -1;
+      Unit *selectedUnit = app->unitManager.getSelectedUnit();
+      if (selectedUnit) {
+        targetTile = selectedUnit->tileId;
+      } else {
+        targetTile = app->selectedTileId;
+      }
+
+      if (targetTile < 0 || targetTile >= static_cast<int>(planet.hexTiles.size())) {
+        std::cout << "[Construction] Please select a tile or unit first.\n";
+      } else {
+        std::string msg;
+        if (app->economyManager.upgradeMine(planet.hexTiles[targetTile], msg)) {
+          std::cout << "[Upgrade SUCCESS] " << msg << "\n";
+          app->economyManager.printInspection(planet.hexTiles[targetTile], targetTile);
+          app->updateWindowTitle();
+        } else {
+          std::cout << "[Upgrade FAILED] " << msg << "\n";
+        }
+      }
+    } else if (key == GLFW_KEY_B) {
+      // Build Solar Array
+      int targetTile = -1;
+      Unit *selectedUnit = app->unitManager.getSelectedUnit();
+      if (selectedUnit) {
+        targetTile = selectedUnit->tileId;
+      } else {
+        targetTile = app->selectedTileId;
+      }
+
+      if (targetTile < 0 || targetTile >= static_cast<int>(planet.hexTiles.size())) {
+        std::cout << "[Construction] Please select a tile or unit first.\n";
+      } else {
+        Unit *unitOnTile = app->unitManager.getUnitAtTile(targetTile);
+        bool hasSettler = (unitOnTile && unitOnTile->owner == 0 && unitOnTile->type == UnitType::SETTLER);
+        if (!hasSettler) {
+          std::cout << "[Construction] Building a Solar Array requires a Settler/Worker on the tile.\n";
+        } else {
+          std::string msg;
+          if (app->economyManager.buildSolar(planet.hexTiles[targetTile], msg)) {
+            unitOnTile->movementPoints = 0;
+            std::cout << "[Construction SUCCESS] " << msg << "\n";
+            app->economyManager.printInspection(planet.hexTiles[targetTile], targetTile);
+            app->updateWindowTitle();
+          } else {
+            std::cout << "[Construction FAILED] " << msg << "\n";
+          }
+        }
+      }
+    } else if (key == GLFW_KEY_P) {
+      // Recruit Unit (Settler -> Warrior -> Scout)
+      int spawnTile = -1;
+      if (app->selectedTileId >= 0 && app->selectedTileId < static_cast<int>(planet.hexTiles.size()) &&
+          planet.hexTiles[app->selectedTileId].terrainType != 0 &&
+          app->unitManager.getUnitAtTile(app->selectedTileId) == nullptr) {
+        spawnTile = app->selectedTileId;
+      } else {
+        for (const auto &tile : planet.hexTiles) {
+          if (tile.terrainType != 0 && app->unitManager.getUnitAtTile(tile.id) == nullptr) {
+            spawnTile = tile.id;
+            break;
+          }
+        }
+      }
+
+      if (spawnTile == -1) {
+        std::cout << "[Recruitment] No empty land tile available to spawn unit.\n";
+      } else {
+        static int recruitCycle = 0;
+        int typeIdx = (recruitCycle++) % 3;
+        UnitType uType = (typeIdx == 0) ? UnitType::SETTLER : ((typeIdx == 1) ? UnitType::WARRIOR : UnitType::SCOUT);
+        int costType = (typeIdx == 0) ? 2 : ((typeIdx == 1) ? 1 : 0);
+
+        std::string failReason;
+        if (app->economyManager.canRecruitUnit(costType, failReason)) {
+          app->economyManager.payRecruitCost(costType);
+          int newId = app->unitManager.spawnUnit(uType, 0, spawnTile, planet);
+          std::cout << "[Recruitment SUCCESS] Recruited " << (typeIdx == 0 ? "Settler/Worker" : (typeIdx == 1 ? "Warrior" : "Scout"))
+                    << " #" << newId << " at Tile #" << spawnTile << "!\n";
+          std::cout << " Stockpile: " << app->economyManager.getStockpileString() << "\n";
+          app->selectUnitById(newId);
+          app->updateWindowTitle();
+        } else {
+          std::cout << "[Recruitment FAILED] " << failReason << "\n";
+        }
+      }
+    } else if (key == GLFW_KEY_I) {
+      // Overview
+      std::cout << "\n======================== [ STRATEGIC & ECONOMIC OVERVIEW ] ========================\n";
+      std::cout << " Current Turn: " << app->economyManager.currentTurn << "\n";
+      std::cout << " Stockpiles:   " << app->economyManager.getStockpileString() << "\n";
+      std::cout << " Active Units: " << app->unitManager.units.size() << " total units\n";
+      int mines = 0, deepCore = 0, solar = 0;
+      for (const auto &tile : planet.hexTiles) {
+        if (tile.structure.type == Sphere::StructureType::SURFACE_MINE) mines++;
+        else if (tile.structure.type == Sphere::StructureType::DEEP_CORE_EXTRACTOR) deepCore++;
+        else if (tile.structure.type == Sphere::StructureType::SOLAR_ARRAY) solar++;
+      }
+      std::cout << " Facilities:   " << mines << " Surface Mines, " << deepCore << " Deep Core Extractors, " << solar << " Solar Plants\n";
+      std::cout << " Controls:     [M] Build Mine (Settler on ore tile) | [U] Upgrade Mine\n";
+      std::cout << "               [B] Build Solar Plant                | [P] Recruit Unit\n";
+      std::cout << "               [Tab] Cycle Units                    | [Enter/N] Next Turn\n";
+      std::cout << "====================================================================================\n\n";
     } else if (key == GLFW_KEY_ESCAPE) {
       app->clearHighlights();
       app->unitManager.deselectUnit();
       std::cout << "[HexPlanet] Selection cleared.\n";
+      app->updateWindowTitle();
     }
   }
 

@@ -462,6 +462,71 @@ void Sphere::generateHexasphere(float cx, float cy, float cz, float radius,
       }
     }
 
+    // Procedural Ore Deposits based on Biomes and Terrain
+    tile.structure = TileStructure{};
+    tile.deposit = ResourceDeposit{};
+
+    float oreHash = glm::fract(std::sin(static_cast<float>(v) * 43758.5453f + 1.234f));
+    float richnessHash = glm::fract(std::sin(static_cast<float>(v) * 23421.631f + 7.89f));
+
+    if (tile.terrainType == 3) {
+      // Volcanic Pentagons: 90% chance of Exotic Crystals
+      if (oreHash < 0.90f) {
+        tile.deposit.type = ResourceType::CRYSTAL;
+        tile.deposit.maxReserves = 600 + static_cast<int>(richnessHash * 600.0f);
+        tile.deposit.reserves = tile.deposit.maxReserves;
+        tile.deposit.baseYield = 16 + static_cast<int>(richnessHash * 14.0f);
+      }
+    } else if (tile.terrainType == 2) {
+      // Mountains & Deserts: 75% Iron, 15% Crystal
+      if (oreHash < 0.75f) {
+        tile.deposit.type = ResourceType::IRON;
+        tile.deposit.maxReserves = 800 + static_cast<int>(richnessHash * 900.0f);
+        tile.deposit.reserves = tile.deposit.maxReserves;
+        tile.deposit.baseYield = 25 + static_cast<int>(richnessHash * 20.0f);
+      } else if (oreHash < 0.90f) {
+        tile.deposit.type = ResourceType::CRYSTAL;
+        tile.deposit.maxReserves = 500 + static_cast<int>(richnessHash * 400.0f);
+        tile.deposit.reserves = tile.deposit.maxReserves;
+        tile.deposit.baseYield = 12 + static_cast<int>(richnessHash * 10.0f);
+      }
+    } else if (tile.terrainType == 4) {
+      // Polar Ice: 60% chance of Deuterium Ice
+      if (oreHash < 0.60f) {
+        tile.deposit.type = ResourceType::DEUTERIUM;
+        tile.deposit.maxReserves = 500 + static_cast<int>(richnessHash * 700.0f);
+        tile.deposit.reserves = tile.deposit.maxReserves;
+        tile.deposit.baseYield = 15 + static_cast<int>(richnessHash * 15.0f);
+      }
+    } else if (tile.terrainType == 5) {
+      // Tundra: 40% Hydrocarbon, 25% Iron
+      if (oreHash < 0.40f) {
+        tile.deposit.type = ResourceType::HYDROCARBON;
+        tile.deposit.maxReserves = 600 + static_cast<int>(richnessHash * 600.0f);
+        tile.deposit.reserves = tile.deposit.maxReserves;
+        tile.deposit.baseYield = 18 + static_cast<int>(richnessHash * 15.0f);
+      } else if (oreHash < 0.65f) {
+        tile.deposit.type = ResourceType::IRON;
+        tile.deposit.maxReserves = 600 + static_cast<int>(richnessHash * 500.0f);
+        tile.deposit.reserves = tile.deposit.maxReserves;
+        tile.deposit.baseYield = 18 + static_cast<int>(richnessHash * 12.0f);
+      }
+    } else if (tile.terrainType == 1) {
+      // Plains / Forest: 45% chance of Hydrocarbons / Biomass
+      if (oreHash < 0.45f) {
+        tile.deposit.type = ResourceType::HYDROCARBON;
+        tile.deposit.maxReserves = 700 + static_cast<int>(richnessHash * 800.0f);
+        tile.deposit.reserves = tile.deposit.maxReserves;
+        tile.deposit.baseYield = 20 + static_cast<int>(richnessHash * 15.0f);
+      }
+    }
+
+    // Subtle mineral sheen on tiles with active deposits
+    if (tile.deposit.type != ResourceType::NONE) {
+      glm::vec4 sheen = getResourceColor(tile.deposit.type);
+      tile.color = glm::mix(tile.color, sheen, 0.15f);
+    }
+
     // Store base color for resetting highlights
     tile.baseColor = tile.color;
   }
@@ -561,6 +626,47 @@ void Sphere::setTileColor(int tileId, const glm::vec4 &color, void *mappedGpuBuf
 void Sphere::resetTileColor(int tileId, void *mappedGpuBuffer) {
   if (tileId < 0 || tileId >= static_cast<int>(hexTiles.size())) return;
   setTileColor(tileId, hexTiles[tileId].baseColor, mappedGpuBuffer);
+}
+
+std::string Sphere::getTerrainName(int terrainType) {
+  switch (terrainType) {
+    case 0: return "Ocean";
+    case 1: return "Plains / Forest";
+    case 2: return "Mountain / Desert";
+    case 3: return "Volcanic Crater";
+    case 4: return "Polar Ice Cap";
+    case 5: return "Tundra";
+    default: return "Unknown";
+  }
+}
+
+std::string Sphere::getResourceName(ResourceType type) {
+  switch (type) {
+    case ResourceType::IRON: return "Iron Ore";
+    case ResourceType::CRYSTAL: return "Exotic Crystal";
+    case ResourceType::HYDROCARBON: return "Hydrocarbon Fuel";
+    case ResourceType::DEUTERIUM: return "Deuterium Ice";
+    default: return "None";
+  }
+}
+
+std::string Sphere::getStructureName(StructureType type) {
+  switch (type) {
+    case StructureType::SURFACE_MINE: return "Surface Mine (Tier 1)";
+    case StructureType::DEEP_CORE_EXTRACTOR: return "Deep Core Extractor (Tier 2)";
+    case StructureType::SOLAR_ARRAY: return "Solar Array";
+    default: return "None";
+  }
+}
+
+glm::vec4 Sphere::getResourceColor(ResourceType type) {
+  switch (type) {
+    case ResourceType::IRON: return glm::vec4(0.88f, 0.45f, 0.18f, 1.0f); // Bronze / Rust
+    case ResourceType::CRYSTAL: return glm::vec4(0.20f, 0.95f, 1.0f, 1.0f); // Neon Cyan
+    case ResourceType::HYDROCARBON: return glm::vec4(0.95f, 0.78f, 0.15f, 1.0f); // Amber Gold
+    case ResourceType::DEUTERIUM: return glm::vec4(0.40f, 0.98f, 0.85f, 1.0f); // Frosted Teal
+    default: return glm::vec4(1.0f);
+  }
 }
 
 

@@ -519,9 +519,29 @@ void UnitManager::buildUnitMeshes(float totalTime, const Sphere &planet) {
 
   std::vector<Sphere::Vertex> verts;
   std::vector<uint16_t> indices;
-  verts.reserve(units.size() * 64);
-  indices.reserve(units.size() * 128);
+  verts.reserve(2048);
+  indices.reserve(4096);
 
+  // 1. Render Natural Ore Deposits on unbuilt tiles
+  for (const auto &tile : planet.hexTiles) {
+    if (tile.deposit.type != Sphere::ResourceType::NONE &&
+        tile.structure.type == Sphere::StructureType::NONE) {
+      addOreDepositMesh(tile, totalTime, verts, indices);
+    }
+  }
+
+  // 2. Render Constructed Structures (Mines, Deep Core Rigs, Solar Plants)
+  for (const auto &tile : planet.hexTiles) {
+    if (tile.structure.type == Sphere::StructureType::SURFACE_MINE) {
+      addMineMesh(tile, totalTime, verts, indices);
+    } else if (tile.structure.type == Sphere::StructureType::DEEP_CORE_EXTRACTOR) {
+      addDeepCoreMesh(tile, totalTime, verts, indices);
+    } else if (tile.structure.type == Sphere::StructureType::SOLAR_ARRAY) {
+      addSolarArrayMesh(tile, totalTime, verts, indices);
+    }
+  }
+
+  // 3. Render Units
   for (const auto &u : units) {
     bool isSelected = (u.id == selectedUnitId);
 
@@ -547,7 +567,7 @@ void UnitManager::buildUnitMeshes(float totalTime, const Sphere &planet) {
   }
 
   indexCount = static_cast<uint32_t>(indices.size());
-  if (indexCount > 0) {
+  if (indexCount > 0 && verts.size() < MAX_VERTICES && indices.size() < MAX_INDICES) {
     memcpy(vertexBufferMapped, verts.data(), verts.size() * sizeof(Sphere::Vertex));
     memcpy(indexBufferMapped, indices.data(), indices.size() * sizeof(uint16_t));
   }
@@ -744,5 +764,242 @@ void UnitManager::recordRender(VkCommandBuffer commandBuffer) {
     vkCmdBindVertexBuffers(commandBuffer, 0, 1, vbs, offsets);
     vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT16);
     vkCmdDrawIndexed(commandBuffer, indexCount, 1, 0, 0, 0);
+  }
+}
+
+void UnitManager::addOreDepositMesh(const Sphere::HexTile &tile, float totalTime,
+                                    std::vector<Sphere::Vertex> &verts, std::vector<uint16_t> &indices) {
+  if (verts.size() + 20 >= MAX_VERTICES || indices.size() + 40 >= MAX_INDICES) return;
+
+  glm::vec3 up = tile.normal;
+  glm::vec3 temp = (std::abs(up.y) > 0.9f) ? glm::vec3(1.0f, 0.0f, 0.0f) : glm::vec3(0.0f, 1.0f, 0.0f);
+  glm::vec3 tan = glm::normalize(glm::cross(up, temp));
+  glm::vec3 bitan = glm::normalize(glm::cross(up, tan));
+
+  glm::vec3 pos = tile.center * 1.008f;
+  glm::vec4 color = Sphere::getResourceColor(tile.deposit.type);
+  float shimmer = 1.0f + 0.18f * std::sin(totalTime * 3.0f + static_cast<float>(tile.id));
+  color = glm::clamp(color * shimmer, 0.0f, 1.0f);
+
+  // 3 faceted crystalline shards / ore nuggets
+  float angles[3] = {0.0f, 2.1f, 4.2f};
+  float dists[3] = {0.020f, 0.024f, 0.018f};
+  float heights[3] = {0.035f, 0.048f, 0.028f};
+  float radii[3] = {0.010f, 0.012f, 0.009f};
+
+  for (int s = 0; s < 3; ++s) {
+    if (verts.size() + 6 >= MAX_VERTICES || indices.size() + 12 >= MAX_INDICES) return;
+    glm::vec3 cPos = pos + (tan * std::cos(angles[s]) + bitan * std::sin(angles[s])) * dists[s];
+    glm::vec3 tip = cPos + up * heights[s];
+    uint16_t base = static_cast<uint16_t>(verts.size());
+
+    verts.push_back({tip, up, color * 1.3f, {0.5f, 0.5f}}); // 0: tip
+
+    // 4 base corners
+    for (int c = 0; c < 4; ++c) {
+      float ca = static_cast<float>(c) * 1.5707963f;
+      glm::vec3 bCorner = cPos + (tan * std::cos(ca) + bitan * std::sin(ca)) * radii[s];
+      verts.push_back({bCorner, glm::normalize(bCorner - cPos), color * 0.85f, {0.5f, 0.5f}});
+    }
+
+    // 4 triangular sides
+    for (int c = 0; c < 4; ++c) {
+      uint16_t i0 = static_cast<uint16_t>(base + 1 + c);
+      uint16_t i1 = static_cast<uint16_t>(base + 1 + ((c + 1) % 4));
+      indices.push_back(base);
+      indices.push_back(i0);
+      indices.push_back(i1);
+    }
+  }
+}
+
+void UnitManager::addMineMesh(const Sphere::HexTile &tile, float totalTime,
+                              std::vector<Sphere::Vertex> &verts, std::vector<uint16_t> &indices) {
+  if (verts.size() + 40 >= MAX_VERTICES || indices.size() + 80 >= MAX_INDICES) return;
+
+  glm::vec3 up = tile.normal;
+  glm::vec3 temp = (std::abs(up.y) > 0.9f) ? glm::vec3(1.0f, 0.0f, 0.0f) : glm::vec3(0.0f, 1.0f, 0.0f);
+  glm::vec3 tan = glm::normalize(glm::cross(up, temp));
+  glm::vec3 bitan = glm::normalize(glm::cross(up, tan));
+
+  glm::vec3 pos = tile.center * 1.01f;
+  glm::vec4 frameColor(0.82f, 0.84f, 0.88f, 1.0f); // Industrial Steel
+  glm::vec4 resColor = Sphere::getResourceColor(tile.deposit.type);
+
+  float derrickHeight = 0.065f;
+  float baseRadius = 0.042f;
+  float topRadius = 0.016f;
+
+  uint16_t baseIdx = static_cast<uint16_t>(verts.size());
+
+  // 4 Bottom Feet
+  for (int i = 0; i < 4; ++i) {
+    float a = static_cast<float>(i) * 1.5707963f + 0.785398f;
+    glm::vec3 foot = pos + (tan * std::cos(a) + bitan * std::sin(a)) * baseRadius;
+    verts.push_back({foot, up, frameColor * 0.7f, {0.5f, 0.5f}});
+  }
+
+  // 4 Top Platform Corners
+  glm::vec3 crownPos = pos + up * derrickHeight;
+  for (int i = 0; i < 4; ++i) {
+    float a = static_cast<float>(i) * 1.5707963f + 0.785398f;
+    glm::vec3 topC = crownPos + (tan * std::cos(a) + bitan * std::sin(a)) * topRadius;
+    verts.push_back({topC, up, frameColor, {0.5f, 0.5f}});
+  }
+
+  // Derrick frame sides
+  for (int i = 0; i < 4; ++i) {
+    int next = (i + 1) % 4;
+    uint16_t b0 = static_cast<uint16_t>(baseIdx + i);
+    uint16_t b1 = static_cast<uint16_t>(baseIdx + next);
+    uint16_t t0 = static_cast<uint16_t>(baseIdx + 4 + i);
+    uint16_t t1 = static_cast<uint16_t>(baseIdx + 4 + next);
+
+    indices.push_back(b0); indices.push_back(t0); indices.push_back(b1);
+    indices.push_back(b1); indices.push_back(t0); indices.push_back(t1);
+  }
+
+  // Crown top plate
+  uint16_t t0 = static_cast<uint16_t>(baseIdx + 4);
+  uint16_t t1 = static_cast<uint16_t>(baseIdx + 5);
+  uint16_t t2 = static_cast<uint16_t>(baseIdx + 6);
+  uint16_t t3 = static_cast<uint16_t>(baseIdx + 7);
+  indices.push_back(t0); indices.push_back(t1); indices.push_back(t2);
+  indices.push_back(t0); indices.push_back(t2); indices.push_back(t3);
+
+  // Animated Drilling Piston / Shaft in the center
+  float stroke = (std::sin(totalTime * 8.0f) * 0.5f + 0.5f) * 0.025f;
+  glm::vec3 drillTip = pos + up * (0.015f + stroke);
+  glm::vec3 drillTop = pos + up * (derrickHeight + 0.015f);
+
+  uint16_t drillBase = static_cast<uint16_t>(verts.size());
+  verts.push_back({drillTop, up, resColor * 1.2f, {0.5f, 0.5f}});
+  verts.push_back({drillTip, -up, resColor * 1.4f, {0.5f, 0.5f}});
+
+  for (int i = 0; i < 4; ++i) {
+    float a = static_cast<float>(i) * 1.5707963f;
+    glm::vec3 p = drillTip + up * 0.02f + (tan * std::cos(a) + bitan * std::sin(a)) * 0.007f;
+    verts.push_back({p, up, resColor, {0.5f, 0.5f}});
+  }
+
+  for (int i = 0; i < 4; ++i) {
+    int next = (i + 1) % 4;
+    uint16_t c0 = static_cast<uint16_t>(drillBase + 2 + i);
+    uint16_t c1 = static_cast<uint16_t>(drillBase + 2 + next);
+    indices.push_back(drillBase); indices.push_back(c0); indices.push_back(c1);
+    indices.push_back(drillBase + 1); indices.push_back(c1); indices.push_back(c0);
+  }
+}
+
+void UnitManager::addDeepCoreMesh(const Sphere::HexTile &tile, float totalTime,
+                                  std::vector<Sphere::Vertex> &verts, std::vector<uint16_t> &indices) {
+  if (verts.size() + 50 >= MAX_VERTICES || indices.size() + 100 >= MAX_INDICES) return;
+
+  glm::vec3 up = tile.normal;
+  glm::vec3 temp = (std::abs(up.y) > 0.9f) ? glm::vec3(1.0f, 0.0f, 0.0f) : glm::vec3(0.0f, 1.0f, 0.0f);
+  glm::vec3 tan = glm::normalize(glm::cross(up, temp));
+  glm::vec3 bitan = glm::normalize(glm::cross(up, tan));
+
+  glm::vec3 pos = tile.center * 1.01f;
+  glm::vec4 darkArmor(0.22f, 0.24f, 0.28f, 1.0f);
+  glm::vec4 glowColor = Sphere::getResourceColor(tile.deposit.type) * 1.5f;
+
+  float towerHeight = 0.085f;
+  float pylonDist = 0.038f;
+  float pylonRad = 0.010f;
+
+  // Dual Heavy Pylons on left and right
+  for (int side = -1; side <= 1; side += 2) {
+    if (verts.size() + 6 >= MAX_VERTICES || indices.size() + 18 >= MAX_INDICES) return;
+    glm::vec3 pBase = pos + tan * (static_cast<float>(side) * pylonDist);
+    glm::vec3 pTop = pBase + up * towerHeight;
+    uint16_t pIdx = static_cast<uint16_t>(verts.size());
+
+    verts.push_back({pTop, up, darkArmor * 1.4f, {0.5f, 0.5f}});
+    verts.push_back({pBase, -up, darkArmor * 0.7f, {0.5f, 0.5f}});
+
+    for (int i = 0; i < 4; ++i) {
+      float a = static_cast<float>(i) * 1.5707963f;
+      glm::vec3 c = pBase + up * (towerHeight * 0.5f) + (tan * std::cos(a) + bitan * std::sin(a)) * pylonRad;
+      verts.push_back({c, up, darkArmor, {0.5f, 0.5f}});
+    }
+
+    for (int i = 0; i < 4; ++i) {
+      int next = (i + 1) % 4;
+      uint16_t c0 = static_cast<uint16_t>(pIdx + 2 + i);
+      uint16_t c1 = static_cast<uint16_t>(pIdx + 2 + next);
+      indices.push_back(pIdx); indices.push_back(c0); indices.push_back(c1);
+      indices.push_back(pIdx + 1); indices.push_back(c1); indices.push_back(c0);
+    }
+  }
+
+  // Rotating Central Plasma Ring
+  float rot = totalTime * 4.5f;
+  glm::vec3 ringCenter = pos + up * 0.055f;
+  float ringR = 0.026f;
+  const int SEGS = 8;
+  uint16_t ringBase = static_cast<uint16_t>(verts.size());
+
+  for (int i = 0; i < SEGS; ++i) {
+    float a = static_cast<float>(i) * (6.2831853f / SEGS) + rot;
+    glm::vec3 rPos = ringCenter + (tan * std::cos(a) + bitan * std::sin(a)) * ringR;
+    verts.push_back({rPos, up, glowColor, {0.5f, 0.5f}});
+  }
+
+  for (int i = 0; i < SEGS; ++i) {
+    int next = (i + 1) % SEGS;
+    uint16_t i0 = static_cast<uint16_t>(ringBase + i);
+    uint16_t i1 = static_cast<uint16_t>(ringBase + next);
+    uint16_t coreIdx = static_cast<uint16_t>(verts.size());
+    verts.push_back({ringCenter, up, glowColor * 1.8f, {0.5f, 0.5f}});
+    indices.push_back(coreIdx); indices.push_back(i0); indices.push_back(i1);
+  }
+}
+
+void UnitManager::addSolarArrayMesh(const Sphere::HexTile &tile, float totalTime,
+                                    std::vector<Sphere::Vertex> &verts, std::vector<uint16_t> &indices) {
+  if (verts.size() + 30 >= MAX_VERTICES || indices.size() + 50 >= MAX_INDICES) return;
+
+  glm::vec3 up = tile.normal;
+  glm::vec3 temp = (std::abs(up.y) > 0.9f) ? glm::vec3(1.0f, 0.0f, 0.0f) : glm::vec3(0.0f, 1.0f, 0.0f);
+  glm::vec3 tan = glm::normalize(glm::cross(up, temp));
+  glm::vec3 bitan = glm::normalize(glm::cross(up, tan));
+
+  glm::vec3 pos = tile.center * 1.01f;
+  glm::vec4 postColor(0.85f, 0.85f, 0.88f, 1.0f);
+  glm::vec4 panelColor(0.12f, 0.38f, 0.95f, 1.0f); // Solar Cell Blue
+
+  // Central Pylon
+  glm::vec3 top = pos + up * 0.045f;
+  uint16_t pylonBase = static_cast<uint16_t>(verts.size());
+  verts.push_back({top, up, postColor, {0.5f, 0.5f}});
+  verts.push_back({pos, -up, postColor * 0.7f, {0.5f, 0.5f}});
+  verts.push_back({top + tan * 0.008f, up, postColor, {0.5f, 0.5f}});
+  verts.push_back({top - tan * 0.008f, up, postColor, {0.5f, 0.5f}});
+
+  indices.push_back(pylonBase); indices.push_back(pylonBase + 2); indices.push_back(pylonBase + 1);
+  indices.push_back(pylonBase); indices.push_back(pylonBase + 3); indices.push_back(pylonBase + 1);
+
+  // Twin Solar Panels (Winged)
+  float wingW = 0.038f;
+  float wingH = 0.022f;
+
+  for (int side = -1; side <= 1; side += 2) {
+    if (verts.size() + 4 >= MAX_VERTICES || indices.size() + 6 >= MAX_INDICES) return;
+    glm::vec3 wCenter = top + tan * (static_cast<float>(side) * 0.030f);
+    uint16_t wBase = static_cast<uint16_t>(verts.size());
+
+    glm::vec3 c0 = wCenter - tan * wingW * 0.5f - bitan * wingH * 0.5f + up * 0.005f;
+    glm::vec3 c1 = wCenter + tan * wingW * 0.5f - bitan * wingH * 0.5f + up * 0.005f;
+    glm::vec3 c2 = wCenter + tan * wingW * 0.5f + bitan * wingH * 0.5f - up * 0.005f;
+    glm::vec3 c3 = wCenter - tan * wingW * 0.5f + bitan * wingH * 0.5f - up * 0.005f;
+
+    verts.push_back({c0, up, panelColor, {0.5f, 0.5f}});
+    verts.push_back({c1, up, panelColor * 1.2f, {0.5f, 0.5f}});
+    verts.push_back({c2, up, panelColor * 0.9f, {0.5f, 0.5f}});
+    verts.push_back({c3, up, panelColor, {0.5f, 0.5f}});
+
+    indices.push_back(wBase); indices.push_back(wBase + 1); indices.push_back(wBase + 2);
+    indices.push_back(wBase); indices.push_back(wBase + 2); indices.push_back(wBase + 3);
   }
 }

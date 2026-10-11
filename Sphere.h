@@ -36,6 +36,38 @@ public:
   float centerY;
   float centerZ;
 
+  enum class ResourceType {
+    NONE = 0,
+    IRON = 1,        // Structural metals found in Mountains & Deserts
+    CRYSTAL = 2,     // Exotic energy crystals found in Volcanic Pentagons
+    HYDROCARBON = 3, // Fossil fuels & chemicals found in Plains & Tundra
+    DEUTERIUM = 4    // Fusion fuels found in Polar Ice caps
+  };
+
+  enum class StructureType {
+    NONE = 0,
+    SURFACE_MINE = 1,        // Primary extraction facility
+    DEEP_CORE_EXTRACTOR = 2, // Advanced Tier-2 mine (+100% yield)
+    SOLAR_ARRAY = 3          // Renewable power generator (+25 Energy/turn)
+  };
+
+  struct ResourceDeposit {
+    ResourceType type = ResourceType::NONE;
+    int reserves = 0;       // Remaining ore units
+    int maxReserves = 0;
+    int baseYield = 0;      // Ore extracted per turn
+    bool isDiscovered = true;
+  };
+
+  struct TileStructure {
+    StructureType type = StructureType::NONE;
+    int owner = 0;          // 0 = Player, 1 = Rival
+    int level = 1;
+    int health = 100;
+    int maxHealth = 100;
+    bool isActive = true;
+  };
+
   struct HexGridConfig {
     int frequency;      // Subdivision frequency n
     int totalTiles;     // 10 * n^2 + 2
@@ -55,6 +87,8 @@ public:
     int terrainType;                         // 0: Ocean, 1: Plains, 2: Mountains, etc.
     uint32_t vertexStart;                    // First vertex index in Data
     uint32_t vertexCount;                    // Number of vertices for this tile
+    ResourceDeposit deposit;
+    TileStructure structure;
   };
 
   std::vector<HexTile> hexTiles;
@@ -87,6 +121,11 @@ public:
   void setRadius(float r);
   int getSubdivisions() const;
   void setSubdivisions(int subs);
+
+  static std::string getTerrainName(int terrainType);
+  static std::string getResourceName(ResourceType type);
+  static std::string getStructureName(StructureType type);
+  static glm::vec4 getResourceColor(ResourceType type);
 };
 
 #endif
