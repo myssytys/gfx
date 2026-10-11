@@ -27,7 +27,6 @@
 #include "Deca.h"
 #include "Icosa.h"
 #include "Octa.h"
-#include "ParticleSystem.h"
 #include "Sphere.h"
 #include "Tetra.h"
 #include "UnitManager.h"
@@ -209,8 +208,6 @@ private:
   uint32_t currentFrame = 0;
 
   bool framebufferResized = false;
-
-  ParticleSystem particleSystem{65536};
 
   void *vertexBufferMapped = nullptr;
 
@@ -703,9 +700,6 @@ private:
     createDescriptorSets();
     createCommandBuffers();
     createSyncObjects();
-    particleSystem.init(device, physicalDevice, commandPool, graphicsQueue,
-                        renderPass, uniformBuffers, sizeof(UniformBufferObject),
-                        MAX_FRAMES_IN_FLIGHT);
     unitManager.init(device, physicalDevice);
     unitManager.spawnDefaultUnits(planet);
     if (unitManager.selectedUnitId != -1) {
@@ -742,7 +736,6 @@ private:
     cleanupSwapChain();
 
     unitManager.cleanup();
-    particleSystem.cleanup();
 
     vkDestroyPipeline(device, graphicsPipeline, nullptr);
     vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
@@ -1786,7 +1779,7 @@ private:
       throw std::runtime_error("failed to begin recording command buffer!");
     }
 
-    // 1. Dispatch GPU Compute Particle Simulation (executed outside render pass)
+    // 1. Calculate frame delta & total simulation time
     static auto lastTime = std::chrono::high_resolution_clock::now();
     static auto startTime = std::chrono::high_resolution_clock::now();
     auto currentTime = std::chrono::high_resolution_clock::now();
@@ -1803,14 +1796,6 @@ private:
     if (deltaTime <= 0.0f || deltaTime > 0.1f) {
       deltaTime = 0.016f;
     }
-
-    // Dynamic swirling attractor orbiting around the center geometry
-    glm::vec3 attractorPos =
-        glm::vec3(sin(totalTime * 1.5f) * 1.2f, cos(totalTime * 1.5f) * 1.2f,
-                  sin(totalTime * 2.0f) * 0.6f);
-
-    particleSystem.recordCompute(commandBuffer, currentFrame, deltaTime,
-                                 totalTime, attractorPos, 3.5f);
 
     // Update 3D unit movement animations & mesh buffers
     unitManager.update(deltaTime, totalTime, planet);
@@ -1863,11 +1848,8 @@ private:
     vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(planet.indices.size()),
                      1, 0, 0, 0);
 
-    // 2b. Render 3D Units on the planet surface
+    // 2b. Render 3D Units and Structures on the planet surface
     unitManager.recordRender(commandBuffer);
-
-    // 3. Render glowing particle billboards with additive blending on top
-    particleSystem.recordRender(commandBuffer, currentFrame);
 
     vkCmdEndRenderPass(commandBuffer);
 
