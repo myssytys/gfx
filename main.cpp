@@ -25,12 +25,12 @@
 
 #include "Cube.h"
 #include "Deca.h"
+#include "EconomyManager.h"
 #include "Icosa.h"
 #include "Octa.h"
 #include "Sphere.h"
 #include "Tetra.h"
 #include "UnitManager.h"
-#include "EconomyManager.h"
 
 const uint32_t WIDTH = 1024;
 const uint32_t HEIGHT = 768;
@@ -143,7 +143,7 @@ struct UniformBufferObject {
   alignas(16) glm::mat4 proj;
 };
 
-class HelloTriangleApplication {
+class Application {
 public:
   void run() {
     initWindow();
@@ -233,8 +233,9 @@ private:
   double lastMouseY = 0.0;
 
   static const char *getTerrainName(int terrainType) {
-    static const char *terrainNames[] = {
-        "Ocean", "Plains", "Mountain", "Volcanic Landmark", "Polar Ice", "Tundra"};
+    static const char *terrainNames[] = {"Ocean",     "Plains",
+                                         "Mountain",  "Volcanic Landmark",
+                                         "Polar Ice", "Tundra"};
     if (terrainType >= 0 && terrainType <= 5) {
       return terrainNames[terrainType];
     }
@@ -242,35 +243,48 @@ private:
   }
 
   void updateWindowTitle() {
-    if (!window) return;
+    if (!window)
+      return;
     char title[256];
     std::string stock = economyManager.getStockpileString();
     if (Unit *u = unitManager.getSelectedUnit()) {
-      snprintf(title, sizeof(title),
-               "Hex Planet | Turn %d | %s | Unit: %s #%d [MP:%d/%d] on %s (#%d)",
-               economyManager.currentTurn, stock.c_str(), u->name.c_str(), u->id,
-               u->movementPoints, u->maxMovementPoints,
-               Sphere::getTerrainName(planet.hexTiles[u->tileId].terrainType).c_str(), u->tileId);
-    } else if (selectedTileId != -1 && selectedTileId < static_cast<int>(planet.hexTiles.size())) {
+      snprintf(
+          title, sizeof(title),
+          "Hex Planet | Turn %d | %s | Unit: %s #%d [MP:%d/%d] on %s (#%d)",
+          economyManager.currentTurn, stock.c_str(), u->name.c_str(), u->id,
+          u->movementPoints, u->maxMovementPoints,
+          Sphere::getTerrainName(planet.hexTiles[u->tileId].terrainType)
+              .c_str(),
+          u->tileId);
+    } else if (selectedTileId != -1 &&
+               selectedTileId < static_cast<int>(planet.hexTiles.size())) {
       const auto &tile = planet.hexTiles[selectedTileId];
-      std::string resStr = (tile.deposit.type != Sphere::ResourceType::NONE) ?
-                           ("[" + Sphere::getResourceName(tile.deposit.type) + ": " + std::to_string(tile.deposit.reserves) + "]") : "[Barren]";
-      std::string structStr = (tile.structure.type != Sphere::StructureType::NONE) ?
-                              (" | " + Sphere::getStructureName(tile.structure.type)) : "";
+      std::string resStr =
+          (tile.deposit.type != Sphere::ResourceType::NONE)
+              ? ("[" + Sphere::getResourceName(tile.deposit.type) + ": " +
+                 std::to_string(tile.deposit.reserves) + "]")
+              : "[Barren]";
+      std::string structStr =
+          (tile.structure.type != Sphere::StructureType::NONE)
+              ? (" | " + Sphere::getStructureName(tile.structure.type))
+              : "";
       snprintf(title, sizeof(title),
                "Hex Planet | Turn %d | %s | Tile #%d (%s) %s%s",
                economyManager.currentTurn, stock.c_str(), selectedTileId,
-               Sphere::getTerrainName(tile.terrainType).c_str(), resStr.c_str(), structStr.c_str());
+               Sphere::getTerrainName(tile.terrainType).c_str(), resStr.c_str(),
+               structStr.c_str());
     } else {
       snprintf(title, sizeof(title),
-               "Hex Planet Strategy | Turn %d | %s | [L-Click] Move/Select | [M] Mine | [Enter] Next Turn",
+               "Hex Planet Strategy | Turn %d | %s | [L-Click] Move/Select | "
+               "[M] Mine | [Enter] Next Turn",
                economyManager.currentTurn, stock.c_str());
     }
     glfwSetWindowTitle(window, title);
   }
 
   void clearHighlights() {
-    if (!vertexBufferMapped) return;
+    if (!vertexBufferMapped)
+      return;
     if (selectedTileId != -1) {
       planet.resetTileColor(selectedTileId, vertexBufferMapped);
       selectedTileId = -1;
@@ -290,28 +304,36 @@ private:
     clearHighlights();
     unitManager.selectUnit(unitId);
     Unit *u = unitManager.getUnit(unitId);
-    if (!u) return;
+    if (!u)
+      return;
 
     selectedTileId = u->tileId;
-    planet.setTileColor(selectedTileId, glm::vec4(1.0f, 0.85f, 0.20f, 1.0f), vertexBufferMapped);
+    planet.setTileColor(selectedTileId, glm::vec4(1.0f, 0.85f, 0.20f, 1.0f),
+                        vertexBufferMapped);
 
     reachableTiles = unitManager.getReachableTiles(unitId, planet);
     for (int t : reachableTiles) {
-      planet.setTileColor(t, glm::vec4(0.20f, 0.88f, 0.82f, 1.0f), vertexBufferMapped);
+      planet.setTileColor(t, glm::vec4(0.20f, 0.88f, 0.82f, 1.0f),
+                          vertexBufferMapped);
     }
 
     std::cout << "\n=========================================\n";
-    std::cout << ">>> SELECTED UNIT #" << u->id << ": " << u->name
-              << " (" << (u->owner == 0 ? "Player" : "Rival Faction") << ")\n";
+    std::cout << ">>> SELECTED UNIT #" << u->id << ": " << u->name << " ("
+              << (u->owner == 0 ? "Player" : "Rival Faction") << ")\n";
     std::cout << "  Location: Tile #" << u->tileId << " ("
-              << getTerrainName(planet.hexTiles[u->tileId].terrainType) << ")\n";
-    std::cout << "  Stats:    MP: " << u->movementPoints << "/" << u->maxMovementPoints
-              << " | HP: " << u->health << "/" << u->maxHealth << "\n";
-    std::cout << "  Reachable Tiles: " << reachableTiles.size() << " hexes in range.\n";
+              << getTerrainName(planet.hexTiles[u->tileId].terrainType)
+              << ")\n";
+    std::cout << "  Stats:    MP: " << u->movementPoints << "/"
+              << u->maxMovementPoints << " | HP: " << u->health << "/"
+              << u->maxHealth << "\n";
+    std::cout << "  Reachable Tiles: " << reachableTiles.size()
+              << " hexes in range.\n";
     if (u->type == UnitType::SETTLER) {
-      std::cout << "  Settler Actions: [M] Build Mine (40 Fe, 20 Pwr) | [B] Build Solar Array (50 Fe)\n";
+      std::cout << "  Settler Actions: [M] Build Mine (40 Fe, 20 Pwr) | [B] "
+                   "Build Solar Array (50 Fe)\n";
     }
-    std::cout << "  General Controls: [L/R-Click] Move Unit | [Tab] Cycle Units | [Enter/N] Next Turn\n";
+    std::cout << "  General Controls: [L/R-Click] Move Unit | [Tab] Cycle "
+                 "Units | [Enter/N] Next Turn\n";
     std::cout << "=========================================\n" << std::endl;
     updateWindowTitle();
   }
@@ -319,10 +341,12 @@ private:
   void selectTileOnly(int hit) {
     clearHighlights();
     unitManager.deselectUnit();
-    if (hit < 0 || hit >= static_cast<int>(planet.hexTiles.size())) return;
+    if (hit < 0 || hit >= static_cast<int>(planet.hexTiles.size()))
+      return;
 
     selectedTileId = hit;
-    planet.setTileColor(selectedTileId, glm::vec4(1.0f, 0.85f, 0.15f, 1.0f), vertexBufferMapped);
+    planet.setTileColor(selectedTileId, glm::vec4(1.0f, 0.85f, 0.15f, 1.0f),
+                        vertexBufferMapped);
 
     const auto &tile = planet.hexTiles[selectedTileId];
     economyManager.printInspection(tile, selectedTileId);
@@ -332,7 +356,8 @@ private:
       int nId = tile.neighbors[dir];
       if (nId >= 0 && nId < static_cast<int>(planet.hexTiles.size())) {
         highlightedNeighbors.push_back(nId);
-        planet.setTileColor(nId, glm::vec4(0.35f, 0.95f, 0.45f, 1.0f), vertexBufferMapped);
+        planet.setTileColor(nId, glm::vec4(0.35f, 0.95f, 0.45f, 1.0f),
+                            vertexBufferMapped);
       }
     }
   }
@@ -350,7 +375,10 @@ private:
     // Check if clicked tile is in reachableTiles of currently selected unit
     bool isReachable = false;
     for (int t : reachableTiles) {
-      if (t == hit) { isReachable = true; break; }
+      if (t == hit) {
+        isReachable = true;
+        break;
+      }
     }
 
     if (selectedUnit && isReachable) {
@@ -358,7 +386,8 @@ private:
       int unitId = selectedUnit->id;
       bool moved = unitManager.moveUnit(unitId, hit, planet);
       if (moved) {
-        selectUnitById(unitId); // Refresh unit position and remaining reachable tiles
+        selectUnitById(
+            unitId); // Refresh unit position and remaining reachable tiles
         return;
       }
     }
@@ -385,7 +414,8 @@ private:
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
-    window = glfwCreateWindow(WIDTH, HEIGHT, "Hex Planet Strategy - 3D Hexasphere", nullptr, nullptr);
+    window = glfwCreateWindow(
+        WIDTH, HEIGHT, "Hex Planet Strategy - 3D Hexasphere", nullptr, nullptr);
     glfwSetWindowUserPointer(window, this);
     glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
     glfwSetCursorPosCallback(window, cursorPosCallback);
@@ -395,16 +425,21 @@ private:
 
   static void framebufferResizeCallback(GLFWwindow *window, int width,
                                         int height) {
-    auto app = reinterpret_cast<HelloTriangleApplication *>(
-        glfwGetWindowUserPointer(window));
+    auto app =
+        reinterpret_cast<Application *>(glfwGetWindowUserPointer(window));
     app->framebufferResized = true;
   }
 
   int pickTile(double mouseX, double mouseY) {
-    if (swapChainExtent.width == 0 || swapChainExtent.height == 0) return -1;
+    if (swapChainExtent.width == 0 || swapChainExtent.height == 0)
+      return -1;
 
-    float x_ndc = (2.0f * static_cast<float>(mouseX) / static_cast<float>(swapChainExtent.width)) - 1.0f;
-    float y_ndc = (2.0f * static_cast<float>(mouseY) / static_cast<float>(swapChainExtent.height)) - 1.0f;
+    float x_ndc = (2.0f * static_cast<float>(mouseX) /
+                   static_cast<float>(swapChainExtent.width)) -
+                  1.0f;
+    float y_ndc = (2.0f * static_cast<float>(mouseY) /
+                   static_cast<float>(swapChainExtent.height)) -
+                  1.0f;
 
     glm::mat4 invVP = glm::inverse(currentProjMatrix * currentViewMatrix);
     glm::vec4 nearW = invVP * glm::vec4(x_ndc, y_ndc, 0.0f, 1.0f);
@@ -417,18 +452,22 @@ private:
 
     glm::mat4 invModel = glm::inverse(currentModelMatrix);
     glm::vec3 localOrigin = glm::vec3(invModel * glm::vec4(rayOrigin, 1.0f));
-    glm::vec3 localDir = glm::normalize(glm::vec3(invModel * glm::vec4(rayDir, 0.0f)));
+    glm::vec3 localDir =
+        glm::normalize(glm::vec3(invModel * glm::vec4(rayDir, 0.0f)));
 
     float b = glm::dot(localOrigin, localDir);
-    float c = glm::dot(localOrigin, localOrigin) - (PLANET_RADIUS * PLANET_RADIUS);
+    float c =
+        glm::dot(localOrigin, localOrigin) - (PLANET_RADIUS * PLANET_RADIUS);
     float disc = b * b - c;
 
-    if (disc < 0.0f) return -1;
+    if (disc < 0.0f)
+      return -1;
 
     float t = -b - std::sqrt(disc);
     if (t < 0.0f) {
       t = -b + std::sqrt(disc);
-      if (t < 0.0f) return -1;
+      if (t < 0.0f)
+        return -1;
     }
 
     glm::vec3 hitPoint = localOrigin + t * localDir;
@@ -436,27 +475,38 @@ private:
   }
 
   void updateHover(double mouseX, double mouseY) {
-    if (!vertexBufferMapped) return;
+    if (!vertexBufferMapped)
+      return;
     int hit = pickTile(mouseX, mouseY);
-    if (hit == hoveredTileId) return;
+    if (hit == hoveredTileId)
+      return;
 
     if (hoveredTileId != -1) {
       bool isSelected = (hoveredTileId == selectedTileId);
       bool isReachable = false;
       for (int t : reachableTiles) {
-        if (t == hoveredTileId) { isReachable = true; break; }
+        if (t == hoveredTileId) {
+          isReachable = true;
+          break;
+        }
       }
       bool isNeighbor = false;
       for (int n : highlightedNeighbors) {
-        if (n == hoveredTileId) { isNeighbor = true; break; }
+        if (n == hoveredTileId) {
+          isNeighbor = true;
+          break;
+        }
       }
 
       if (isSelected) {
-        planet.setTileColor(hoveredTileId, glm::vec4(1.0f, 0.85f, 0.20f, 1.0f), vertexBufferMapped);
+        planet.setTileColor(hoveredTileId, glm::vec4(1.0f, 0.85f, 0.20f, 1.0f),
+                            vertexBufferMapped);
       } else if (isReachable) {
-        planet.setTileColor(hoveredTileId, glm::vec4(0.20f, 0.88f, 0.82f, 1.0f), vertexBufferMapped);
+        planet.setTileColor(hoveredTileId, glm::vec4(0.20f, 0.88f, 0.82f, 1.0f),
+                            vertexBufferMapped);
       } else if (isNeighbor) {
-        planet.setTileColor(hoveredTileId, glm::vec4(0.35f, 0.95f, 0.45f, 1.0f), vertexBufferMapped);
+        planet.setTileColor(hoveredTileId, glm::vec4(0.35f, 0.95f, 0.45f, 1.0f),
+                            vertexBufferMapped);
       } else {
         planet.resetTileColor(hoveredTileId, vertexBufferMapped);
       }
@@ -467,19 +517,26 @@ private:
     if (hoveredTileId != -1) {
       bool isReachable = false;
       for (int t : reachableTiles) {
-        if (t == hoveredTileId) { isReachable = true; break; }
+        if (t == hoveredTileId) {
+          isReachable = true;
+          break;
+        }
       }
 
       if (isReachable) {
-        planet.setTileColor(hoveredTileId, glm::vec4(0.40f, 1.0f, 0.45f, 1.0f), vertexBufferMapped);
+        planet.setTileColor(hoveredTileId, glm::vec4(0.40f, 1.0f, 0.45f, 1.0f),
+                            vertexBufferMapped);
       } else if (hoveredTileId != selectedTileId) {
-        planet.setTileColor(hoveredTileId, glm::vec4(0.30f, 0.95f, 1.0f, 1.0f), vertexBufferMapped);
+        planet.setTileColor(hoveredTileId, glm::vec4(0.30f, 0.95f, 1.0f, 1.0f),
+                            vertexBufferMapped);
       }
     }
   }
 
-  static void mouseButtonCallback(GLFWwindow *window, int button, int action, int mods) {
-    auto app = reinterpret_cast<HelloTriangleApplication *>(glfwGetWindowUserPointer(window));
+  static void mouseButtonCallback(GLFWwindow *window, int button, int action,
+                                  int mods) {
+    auto app =
+        reinterpret_cast<Application *>(glfwGetWindowUserPointer(window));
     if (button == GLFW_MOUSE_BUTTON_LEFT) {
       if (action == GLFW_PRESS) {
         app->isDragging = true;
@@ -500,7 +557,8 @@ private:
   }
 
   static void cursorPosCallback(GLFWwindow *window, double xpos, double ypos) {
-    auto app = reinterpret_cast<HelloTriangleApplication *>(glfwGetWindowUserPointer(window));
+    auto app =
+        reinterpret_cast<Application *>(glfwGetWindowUserPointer(window));
     if (app->isDragging) {
       double dx = xpos - app->lastMouseX;
       double dy = ypos - app->lastMouseY;
@@ -512,13 +570,17 @@ private:
     app->updateHover(xpos, ypos);
   }
 
-  static void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods) {
-    auto app = reinterpret_cast<HelloTriangleApplication *>(glfwGetWindowUserPointer(window));
-    if (action != GLFW_PRESS) return;
+  static void keyCallback(GLFWwindow *window, int key, int scancode, int action,
+                          int mods) {
+    auto app =
+        reinterpret_cast<Application *>(glfwGetWindowUserPointer(window));
+    if (action != GLFW_PRESS)
+      return;
 
     if (key == GLFW_KEY_SPACE) {
       app->autoRotate = !app->autoRotate;
-      std::cout << "[HexPlanet] Auto-rotation: " << (app->autoRotate ? "ON" : "PAUSED") << "\n";
+      std::cout << "[HexPlanet] Auto-rotation: "
+                << (app->autoRotate ? "ON" : "PAUSED") << "\n";
     } else if (key == GLFW_KEY_ENTER || key == GLFW_KEY_N) {
       app->unitManager.nextTurn();
       app->economyManager.processTurn(planet);
@@ -541,19 +603,24 @@ private:
         targetTile = app->selectedTileId;
       }
 
-      if (targetTile < 0 || targetTile >= static_cast<int>(planet.hexTiles.size())) {
+      if (targetTile < 0 ||
+          targetTile >= static_cast<int>(planet.hexTiles.size())) {
         std::cout << "[Construction] Please select a tile or unit first.\n";
       } else {
         Unit *unitOnTile = app->unitManager.getUnitAtTile(targetTile);
-        bool hasSettler = (unitOnTile && unitOnTile->owner == 0 && unitOnTile->type == UnitType::SETTLER);
+        bool hasSettler = (unitOnTile && unitOnTile->owner == 0 &&
+                           unitOnTile->type == UnitType::SETTLER);
         if (!hasSettler) {
-          std::cout << "[Construction] Building a Mine requires a Settler/Worker on the tile (Tile #" << targetTile << ").\n";
+          std::cout << "[Construction] Building a Mine requires a "
+                       "Settler/Worker on the tile (Tile #"
+                    << targetTile << ").\n";
         } else {
           std::string msg;
           if (app->economyManager.buildMine(planet.hexTiles[targetTile], msg)) {
             unitOnTile->movementPoints = 0; // Consume action
             std::cout << "[Construction SUCCESS] " << msg << "\n";
-            app->economyManager.printInspection(planet.hexTiles[targetTile], targetTile);
+            app->economyManager.printInspection(planet.hexTiles[targetTile],
+                                                targetTile);
             app->updateWindowTitle();
           } else {
             std::cout << "[Construction FAILED] " << msg << "\n";
@@ -570,13 +637,15 @@ private:
         targetTile = app->selectedTileId;
       }
 
-      if (targetTile < 0 || targetTile >= static_cast<int>(planet.hexTiles.size())) {
+      if (targetTile < 0 ||
+          targetTile >= static_cast<int>(planet.hexTiles.size())) {
         std::cout << "[Construction] Please select a tile or unit first.\n";
       } else {
         std::string msg;
         if (app->economyManager.upgradeMine(planet.hexTiles[targetTile], msg)) {
           std::cout << "[Upgrade SUCCESS] " << msg << "\n";
-          app->economyManager.printInspection(planet.hexTiles[targetTile], targetTile);
+          app->economyManager.printInspection(planet.hexTiles[targetTile],
+                                              targetTile);
           app->updateWindowTitle();
         } else {
           std::cout << "[Upgrade FAILED] " << msg << "\n";
@@ -592,19 +661,24 @@ private:
         targetTile = app->selectedTileId;
       }
 
-      if (targetTile < 0 || targetTile >= static_cast<int>(planet.hexTiles.size())) {
+      if (targetTile < 0 ||
+          targetTile >= static_cast<int>(planet.hexTiles.size())) {
         std::cout << "[Construction] Please select a tile or unit first.\n";
       } else {
         Unit *unitOnTile = app->unitManager.getUnitAtTile(targetTile);
-        bool hasSettler = (unitOnTile && unitOnTile->owner == 0 && unitOnTile->type == UnitType::SETTLER);
+        bool hasSettler = (unitOnTile && unitOnTile->owner == 0 &&
+                           unitOnTile->type == UnitType::SETTLER);
         if (!hasSettler) {
-          std::cout << "[Construction] Building a Solar Array requires a Settler/Worker on the tile.\n";
+          std::cout << "[Construction] Building a Solar Array requires a "
+                       "Settler/Worker on the tile.\n";
         } else {
           std::string msg;
-          if (app->economyManager.buildSolar(planet.hexTiles[targetTile], msg)) {
+          if (app->economyManager.buildSolar(planet.hexTiles[targetTile],
+                                             msg)) {
             unitOnTile->movementPoints = 0;
             std::cout << "[Construction SUCCESS] " << msg << "\n";
-            app->economyManager.printInspection(planet.hexTiles[targetTile], targetTile);
+            app->economyManager.printInspection(planet.hexTiles[targetTile],
+                                                targetTile);
             app->updateWindowTitle();
           } else {
             std::cout << "[Construction FAILED] " << msg << "\n";
@@ -614,13 +688,15 @@ private:
     } else if (key == GLFW_KEY_P) {
       // Recruit Unit (Settler -> Warrior -> Scout)
       int spawnTile = -1;
-      if (app->selectedTileId >= 0 && app->selectedTileId < static_cast<int>(planet.hexTiles.size()) &&
+      if (app->selectedTileId >= 0 &&
+          app->selectedTileId < static_cast<int>(planet.hexTiles.size()) &&
           planet.hexTiles[app->selectedTileId].terrainType != 0 &&
           app->unitManager.getUnitAtTile(app->selectedTileId) == nullptr) {
         spawnTile = app->selectedTileId;
       } else {
         for (const auto &tile : planet.hexTiles) {
-          if (tile.terrainType != 0 && app->unitManager.getUnitAtTile(tile.id) == nullptr) {
+          if (tile.terrainType != 0 &&
+              app->unitManager.getUnitAtTile(tile.id) == nullptr) {
             spawnTile = tile.id;
             break;
           }
@@ -628,20 +704,26 @@ private:
       }
 
       if (spawnTile == -1) {
-        std::cout << "[Recruitment] No empty land tile available to spawn unit.\n";
+        std::cout
+            << "[Recruitment] No empty land tile available to spawn unit.\n";
       } else {
         static int recruitCycle = 0;
         int typeIdx = (recruitCycle++) % 3;
-        UnitType uType = (typeIdx == 0) ? UnitType::SETTLER : ((typeIdx == 1) ? UnitType::WARRIOR : UnitType::SCOUT);
+        UnitType uType = (typeIdx == 0) ? UnitType::SETTLER
+                                        : ((typeIdx == 1) ? UnitType::WARRIOR
+                                                          : UnitType::SCOUT);
         int costType = (typeIdx == 0) ? 2 : ((typeIdx == 1) ? 1 : 0);
 
         std::string failReason;
         if (app->economyManager.canRecruitUnit(costType, failReason)) {
           app->economyManager.payRecruitCost(costType);
           int newId = app->unitManager.spawnUnit(uType, 0, spawnTile, planet);
-          std::cout << "[Recruitment SUCCESS] Recruited " << (typeIdx == 0 ? "Settler/Worker" : (typeIdx == 1 ? "Warrior" : "Scout"))
+          std::cout << "[Recruitment SUCCESS] Recruited "
+                    << (typeIdx == 0 ? "Settler/Worker"
+                                     : (typeIdx == 1 ? "Warrior" : "Scout"))
                     << " #" << newId << " at Tile #" << spawnTile << "!\n";
-          std::cout << " Stockpile: " << app->economyManager.getStockpileString() << "\n";
+          std::cout << " Stockpile: "
+                    << app->economyManager.getStockpileString() << "\n";
           app->selectUnitById(newId);
           app->updateWindowTitle();
         } else {
@@ -650,21 +732,33 @@ private:
       }
     } else if (key == GLFW_KEY_I) {
       // Overview
-      std::cout << "\n======================== [ STRATEGIC & ECONOMIC OVERVIEW ] ========================\n";
+      std::cout << "\n======================== [ STRATEGIC & ECONOMIC OVERVIEW "
+                   "] ========================\n";
       std::cout << " Current Turn: " << app->economyManager.currentTurn << "\n";
-      std::cout << " Stockpiles:   " << app->economyManager.getStockpileString() << "\n";
-      std::cout << " Active Units: " << app->unitManager.units.size() << " total units\n";
+      std::cout << " Stockpiles:   " << app->economyManager.getStockpileString()
+                << "\n";
+      std::cout << " Active Units: " << app->unitManager.units.size()
+                << " total units\n";
       int mines = 0, deepCore = 0, solar = 0;
       for (const auto &tile : planet.hexTiles) {
-        if (tile.structure.type == Sphere::StructureType::SURFACE_MINE) mines++;
-        else if (tile.structure.type == Sphere::StructureType::DEEP_CORE_EXTRACTOR) deepCore++;
-        else if (tile.structure.type == Sphere::StructureType::SOLAR_ARRAY) solar++;
+        if (tile.structure.type == Sphere::StructureType::SURFACE_MINE)
+          mines++;
+        else if (tile.structure.type ==
+                 Sphere::StructureType::DEEP_CORE_EXTRACTOR)
+          deepCore++;
+        else if (tile.structure.type == Sphere::StructureType::SOLAR_ARRAY)
+          solar++;
       }
-      std::cout << " Facilities:   " << mines << " Surface Mines, " << deepCore << " Deep Core Extractors, " << solar << " Solar Plants\n";
-      std::cout << " Controls:     [M] Build Mine (Settler on ore tile) | [U] Upgrade Mine\n";
-      std::cout << "               [B] Build Solar Plant                | [P] Recruit Unit\n";
-      std::cout << "               [Tab] Cycle Units                    | [Enter/N] Next Turn\n";
-      std::cout << "====================================================================================\n\n";
+      std::cout << " Facilities:   " << mines << " Surface Mines, " << deepCore
+                << " Deep Core Extractors, " << solar << " Solar Plants\n";
+      std::cout << " Controls:     [M] Build Mine (Settler on ore tile) | [U] "
+                   "Upgrade Mine\n";
+      std::cout << "               [B] Build Solar Plant                | [P] "
+                   "Recruit Unit\n";
+      std::cout << "               [Tab] Cycle Units                    | "
+                   "[Enter/N] Next Turn\n";
+      std::cout << "==========================================================="
+                   "=========================\n\n";
     } else if (key == GLFW_KEY_ESCAPE) {
       app->clearHighlights();
       app->unitManager.deselectUnit();
@@ -690,9 +784,11 @@ private:
     createTextureImage();
     createTextureImageView();
     createTextureSampler();
-    planet.generateHexasphere(PLANET_RADIUS, TARGET_PLANET_HEXAGONS, PLANET_TILE_INSET);
-    std::cout << "[HexPlanet] Initialized with " << planet.hexTiles.size() << " tiles ("
-              << (planet.hexTiles.size() - 12) << " hexagons, 12 pentagons)\n";
+    planet.generateHexasphere(PLANET_RADIUS, TARGET_PLANET_HEXAGONS,
+                              PLANET_TILE_INSET);
+    std::cout << "[HexPlanet] Initialized with " << planet.hexTiles.size()
+              << " tiles (" << (planet.hexTiles.size() - 12)
+              << " hexagons, 12 pentagons)\n";
     createVertexBuffer();
     createIndexBuffer();
     createUniformBuffers();
@@ -814,7 +910,7 @@ private:
 
     VkApplicationInfo appInfo{};
     appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-    appInfo.pApplicationName = "Hello Triangle";
+    appInfo.pApplicationName = "Daedalus";
     appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
     appInfo.pEngineName = "No Engine";
     appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
@@ -1543,13 +1639,13 @@ private:
   void createVertexBuffer() {
     VkDeviceSize bufferSize = sizeof(planet.Data[0]) * planet.Data.size();
 
-    createBuffer(
-        bufferSize,
-        VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-        vertexBuffer, vertexBufferMemory);
+    createBuffer(bufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+                     VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                 vertexBuffer, vertexBufferMemory);
 
-    vkMapMemory(device, vertexBufferMemory, 0, bufferSize, 0, &vertexBufferMapped);
+    vkMapMemory(device, vertexBufferMemory, 0, bufferSize, 0,
+                &vertexBufferMapped);
     memcpy(vertexBufferMapped, planet.Data.data(), (size_t)bufferSize);
   }
 
@@ -1784,12 +1880,12 @@ private:
     static auto startTime = std::chrono::high_resolution_clock::now();
     auto currentTime = std::chrono::high_resolution_clock::now();
     float deltaTime =
-        std::chrono::duration<float, std::chrono::seconds::period>(
-            currentTime - lastTime)
+        std::chrono::duration<float, std::chrono::seconds::period>(currentTime -
+                                                                   lastTime)
             .count();
     float totalTime =
-        std::chrono::duration<float, std::chrono::seconds::period>(
-            currentTime - startTime)
+        std::chrono::duration<float, std::chrono::seconds::period>(currentTime -
+                                                                   startTime)
             .count();
     lastTime = currentTime;
 
@@ -1845,8 +1941,8 @@ private:
                             pipelineLayout, 0, 1, &descriptorSets[currentFrame],
                             0, nullptr);
 
-    vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(planet.indices.size()),
-                     1, 0, 0, 0);
+    vkCmdDrawIndexed(commandBuffer,
+                     static_cast<uint32_t>(planet.indices.size()), 1, 0, 0, 0);
 
     // 2b. Render 3D Units and Structures on the planet surface
     unitManager.recordRender(commandBuffer);
@@ -1895,13 +1991,16 @@ private:
       rotationAngle += dt * glm::radians(20.0f);
     }
 
-    glm::mat4 model = glm::rotate(glm::mat4(1.0f), manualPitch, glm::vec3(1.0f, 0.0f, 0.0f));
+    glm::mat4 model =
+        glm::rotate(glm::mat4(1.0f), manualPitch, glm::vec3(1.0f, 0.0f, 0.0f));
     model = glm::rotate(model, manualYaw, glm::vec3(0.0f, 1.0f, 0.0f));
-    model = glm::rotate(model, glm::radians(23.5f), glm::vec3(0.0f, 0.0f, 1.0f));
+    model =
+        glm::rotate(model, glm::radians(23.5f), glm::vec3(0.0f, 0.0f, 1.0f));
     model = glm::rotate(model, rotationAngle, glm::vec3(0.0f, 1.0f, 0.0f));
 
-    glm::mat4 view = glm::lookAt(glm::vec3(0.0f, 1.2f, 2.8f), glm::vec3(0.0f, 0.0f, 0.0f),
-                                 glm::vec3(0.0f, 1.0f, 0.0f));
+    glm::mat4 view =
+        glm::lookAt(glm::vec3(0.0f, 1.2f, 2.8f), glm::vec3(0.0f, 0.0f, 0.0f),
+                    glm::vec3(0.0f, 1.0f, 0.0f));
     glm::mat4 proj = glm::perspective(
         glm::radians(45.0f),
         swapChainExtent.width / (float)swapChainExtent.height, 0.1f, 100.0f);
@@ -2229,7 +2328,7 @@ private:
 };
 
 int main() {
-  HelloTriangleApplication app;
+  Application app;
 
   try {
     app.run();
