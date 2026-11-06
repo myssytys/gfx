@@ -1,6 +1,7 @@
 # Build artifacts
 *.o
 main
+main2
 
 # Generated dependencies
 dep/

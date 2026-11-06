@@ -2,6 +2,7 @@
 # this requires GNU make
 
 APPNAME=main
+APPNAME2=main2
 
 # Compiler flags
 # enable all warnings in general
@@ -34,13 +35,15 @@ INCFILES=$(wildcard *.h)
 SRCFILES = $(CFILES) $(CPPFILES)
 PRJFILES = Makefile $(wildcard *.vcxproj) $(wildcard *.sln)
 ALLFILES = $(SRCFILES) $(INCFILES) $(PRJFILES)
+COMMON_CPPFILES = $(filter-out main.cpp main2.cpp,$(CPPFILES))
+COMMON_OBJECTS = $(patsubst %.cpp,%.o,$(COMMON_CPPFILES)) $(patsubst %.c,%.o,$(CFILES))
 OBJECTS = $(patsubst %.cpp,%.o,$(CPPFILES)) $(patsubst %.c,%.o,$(CFILES))
 	   
 # build rules
 .PHONY: all shaders
-all:	shaders $(APPNAME)
+all:	shaders $(APPNAME) $(APPNAME2)
 
-shaders: shaders/vert.spv shaders/frag.spv shaders/particle_comp.spv shaders/particle_vert.spv shaders/particle_frag.spv
+shaders: shaders/vert.spv shaders/frag.spv shaders/particle_comp.spv shaders/particle_vert.spv shaders/particle_frag.spv shaders/hypercube_vert.spv shaders/hypercube_frag.spv
 
 shaders/vert.spv: shaders/26_shader_textures.vert
 	glslc $< -o $@
@@ -57,18 +60,27 @@ shaders/particle_vert.spv: shaders/particle.vert
 shaders/particle_frag.spv: shaders/particle.frag
 	glslc $< -o $@
 
-# build and start with "make run"
-.PHONY: run
+shaders/hypercube_vert.spv: shaders/hypercube.vert
+	glslc $< -o $@
+
+shaders/hypercube_frag.spv: shaders/hypercube.frag
+	glslc $< -o $@
+
+# build and start with "make run" or "make run2"
+.PHONY: run run2
 run:	all
 	./$(APPNAME)
+
+run2:	all
+	./$(APPNAME2)
 
 # automatic dependency generation
 # create $(DEPDIR) (and an empty file dir)
 # create a .d file for every .c source file which contains
 # 		   all dependencies for that file
+DEPDIR   = ./dep
 .PHONY: depend
 depend:	$(DEPDIR)/dependencies
-DEPDIR   = ./dep
 DEPFILES = $(patsubst %.c,$(DEPDIR)/%.d,$(CFILES)) $(patsubst %.cpp,$(DEPDIR)/%.d,$(CPPFILES))
 $(DEPDIR)/dependencies: $(DEPDIR)/dir $(DEPFILES)
 	@cat $(DEPFILES) > $(DEPDIR)/dependencies
@@ -88,15 +100,18 @@ $(DEPDIR)/%.d: %.cpp $(DEPDIR)/dir
 	> $@; [ -s $@ ] || rm -f $@
 -include $(DEPDIR)/dependencies
 
-# rule to build application
-$(APPNAME): $(OBJECTS) $(DEPDIR)/dependencies
-	$(CXX) $(CFLAGS) $(OBJECTS) $(LDFLAGS) -o$(APPNAME)
+# rules to build applications
+$(APPNAME): main.o $(COMMON_OBJECTS) $(DEPDIR)/dependencies
+	$(CXX) $(CFLAGS) main.o $(COMMON_OBJECTS) $(LDFLAGS) -o$(APPNAME)
+
+$(APPNAME2): main2.o $(COMMON_OBJECTS) $(DEPDIR)/dependencies
+	$(CXX) $(CFLAGS) main2.o $(COMMON_OBJECTS) $(LDFLAGS) -o$(APPNAME2)
 
 # remove all unneeded files
 .PHONY: clean
 clean:
-	@echo removing binary: $(APPNAME)
-	@rm -f $(APPNAME)
+	@echo removing binaries: $(APPNAME) $(APPNAME2)
+	@rm -f $(APPNAME) $(APPNAME2)
 	@echo removing object files: $(OBJECTS)
 	@rm -f $(OBJECTS)
 	@echo removing dependency files

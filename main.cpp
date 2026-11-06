@@ -26,6 +26,7 @@
 #include "Cube.h"
 #include "Deca.h"
 #include "EconomyManager.h"
+#include "Hypercube.h"
 #include "Icosa.h"
 #include "Octa.h"
 #include "Sphere.h"
@@ -49,6 +50,7 @@ Sphere sphere = Sphere(1.0f, 64, 64);
 Octa octa = Octa(1.0f);
 Deca deca = Deca(1.0f);
 Icosa icosa = Icosa(1.0f);
+Hypercube hypercube = Hypercube(1.0f);
 
 // Hexagonal Strategy Planet Configuration
 const int TARGET_PLANET_HEXAGONS = 250;
@@ -223,7 +225,7 @@ private:
   int selectedTileId = -1;
   std::vector<int> highlightedNeighbors;
 
-  bool autoRotate = true;
+  bool autoRotate = false;
   float rotationAngle = 0.0f;
   float manualPitch = 0.0f;
   float manualYaw = 0.0f;
