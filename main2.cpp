@@ -22,7 +22,7 @@
 #include <stdexcept>
 #include <vector>
 
-#include "Hypercube.h"
+#include "Hypericosa.h"
 
 const uint32_t WIDTH = 1024;
 const uint32_t HEIGHT = 768;
@@ -35,7 +35,7 @@ const std::vector<const char *> validationLayers = {
 const std::vector<const char *> deviceExtensions = {
     VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 
-Hypercube hypercube = Hypercube(1.0f, 16);
+Hypericosa hypericosa = Hypericosa(1.0f, 16);
 
 #ifdef NDEBUG
 const bool enableValidationLayers = false;
@@ -81,11 +81,11 @@ struct SwapChainSupportDetails {
   std::vector<VkPresentModeKHR> presentModes;
 };
 
-struct HypercubeVertexInput {
+struct HypericosaVertexInput {
   static VkVertexInputBindingDescription getBindingDescription() {
     VkVertexInputBindingDescription bindingDescription{};
     bindingDescription.binding = 0;
-    bindingDescription.stride = sizeof(Hypercube::Vertex);
+    bindingDescription.stride = sizeof(Hypericosa::Vertex);
     bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
     return bindingDescription;
   }
@@ -97,22 +97,22 @@ struct HypercubeVertexInput {
     attributeDescriptions[0].binding = 0;
     attributeDescriptions[0].location = 0;
     attributeDescriptions[0].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-    attributeDescriptions[0].offset = offsetof(Hypercube::Vertex, pos);
+    attributeDescriptions[0].offset = offsetof(Hypericosa::Vertex, pos);
 
     attributeDescriptions[1].binding = 0;
     attributeDescriptions[1].location = 1;
     attributeDescriptions[1].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-    attributeDescriptions[1].offset = offsetof(Hypercube::Vertex, normals);
+    attributeDescriptions[1].offset = offsetof(Hypericosa::Vertex, normals);
 
     attributeDescriptions[2].binding = 0;
     attributeDescriptions[2].location = 2;
     attributeDescriptions[2].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-    attributeDescriptions[2].offset = offsetof(Hypercube::Vertex, colors);
+    attributeDescriptions[2].offset = offsetof(Hypericosa::Vertex, colors);
 
     attributeDescriptions[3].binding = 0;
     attributeDescriptions[3].location = 3;
     attributeDescriptions[3].format = VK_FORMAT_R32G32B32_SFLOAT;
-    attributeDescriptions[3].offset = offsetof(Hypercube::Vertex, texCoords);
+    attributeDescriptions[3].offset = offsetof(Hypericosa::Vertex, texCoords);
 
     return attributeDescriptions;
   }
@@ -259,7 +259,7 @@ private:
       return;
     char title[256];
     snprintf(title, sizeof(title),
-             "4D Hypercube (Tesseract) + 3D Texture | Spin: %s [Space] | "
+             "4D Hypericosahedron (600-Cell) + 3D Texture | Spin: %s [Space] | "
              "Faces: %s [F] | [L-Drag] 3D Rot | [R-Drag] 4D Rot | [R] Reset",
              autoSpin ? "ON" : "PAUSED",
              solidFaces ? "SOLID" : "WINDOWED");
@@ -271,7 +271,7 @@ private:
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
-    window = glfwCreateWindow(WIDTH, HEIGHT, "4D Hypercube + 3D Texture",
+    window = glfwCreateWindow(WIDTH, HEIGHT, "4D Hypericosahedron + 3D Texture",
                               nullptr, nullptr);
     glfwSetWindowUserPointer(window, this);
     glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
@@ -282,10 +282,10 @@ private:
 
     std::cout << "\n==========================================================="
                  "========\n";
-    std::cout << "  4D HYPERCUBE (TESSERACT) WITH 3D TEXTURE ("
-              << hypercube.texWidth << "x" << hypercube.texHeight << "x"
-              << hypercube.texDepth << ")\n";
-    std::cout << "  - 8 Cubic 3-Faces (64 4D Vertices, 288 Triangle Indices)\n";
+    std::cout << "  4D HYPERICOSAHEDRON (600-CELL) WITH 3D TEXTURE ("
+              << hypericosa.texWidth << "x" << hypericosa.texHeight << "x"
+              << hypericosa.texDepth << ")\n";
+    std::cout << "  - 600 Tetrahedral 3-Faces (2400 4D Vertices, 7200 Triangle Indices)\n";
     std::cout << "  - Controls:\n";
     std::cout << "      [Space]      Pause / Resume 4D + 3D rotation\n";
     std::cout << "      [F]          Toggle Windowed vs Solid 3D-textured faces\n";
@@ -816,9 +816,9 @@ private:
     vertexInputInfo.sType =
         VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 
-    auto bindingDescription = HypercubeVertexInput::getBindingDescription();
+    auto bindingDescription = HypericosaVertexInput::getBindingDescription();
     auto attributeDescriptions =
-        HypercubeVertexInput::getAttributeDescriptions();
+        HypericosaVertexInput::getAttributeDescriptions();
 
     vertexInputInfo.vertexBindingDescriptionCount = 1;
     vertexInputInfo.vertexAttributeDescriptionCount =
@@ -858,7 +858,15 @@ private:
     colorBlendAttachment.colorWriteMask =
         VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
         VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-    colorBlendAttachment.blendEnable = VK_FALSE;
+    colorBlendAttachment.blendEnable = VK_TRUE;
+    colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+    colorBlendAttachment.dstColorBlendFactor =
+        VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+    colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
+    colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+    colorBlendAttachment.dstAlphaBlendFactor =
+        VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+    colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
 
     VkPipelineColorBlendStateCreateInfo colorBlending{};
     colorBlending.sType =
@@ -890,8 +898,8 @@ private:
     depthStencil.sType =
         VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
     depthStencil.depthTestEnable = VK_TRUE;
-    depthStencil.depthWriteEnable = VK_TRUE;
-    depthStencil.depthCompareOp = VK_COMPARE_OP_LESS;
+    depthStencil.depthWriteEnable = VK_FALSE;
+    depthStencil.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
     depthStencil.depthBoundsTestEnable = VK_FALSE;
     depthStencil.stencilTestEnable = VK_FALSE;
 
@@ -959,9 +967,9 @@ private:
   }
 
   void createTextureImage3D() {
-    uint32_t w = hypercube.texWidth;
-    uint32_t h = hypercube.texHeight;
-    uint32_t d = hypercube.texDepth;
+    uint32_t w = hypericosa.texWidth;
+    uint32_t h = hypericosa.texHeight;
+    uint32_t d = hypericosa.texDepth;
     VkDeviceSize imageSize = static_cast<VkDeviceSize>(w) * h * d * 4;
 
     VkBuffer stagingBuffer;
@@ -973,7 +981,7 @@ private:
 
     void *data;
     vkMapMemory(device, stagingBufferMemory, 0, imageSize, 0, &data);
-    memcpy(data, hypercube.textureData3D.data(), static_cast<size_t>(imageSize));
+    memcpy(data, hypericosa.textureData3D.data(), static_cast<size_t>(imageSize));
     vkUnmapMemory(device, stagingBufferMemory);
 
     createImage3D(w, h, d, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL,
@@ -1238,7 +1246,7 @@ private:
 
   void createVertexBuffer() {
     VkDeviceSize bufferSize =
-        sizeof(hypercube.Data[0]) * hypercube.Data.size();
+        sizeof(hypericosa.Data[0]) * hypericosa.Data.size();
 
     VkBuffer stagingBuffer;
     VkDeviceMemory stagingBufferMemory;
@@ -1249,7 +1257,7 @@ private:
 
     void *data;
     vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
-    memcpy(data, hypercube.Data.data(), static_cast<size_t>(bufferSize));
+    memcpy(data, hypericosa.Data.data(), static_cast<size_t>(bufferSize));
     vkUnmapMemory(device, stagingBufferMemory);
 
     createBuffer(
@@ -1265,7 +1273,7 @@ private:
 
   void createIndexBuffer() {
     VkDeviceSize bufferSize =
-        sizeof(hypercube.indices[0]) * hypercube.indices.size();
+        sizeof(hypericosa.indices[0]) * hypericosa.indices.size();
 
     VkBuffer stagingBuffer;
     VkDeviceMemory stagingBufferMemory;
@@ -1276,7 +1284,7 @@ private:
 
     void *data;
     vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
-    memcpy(data, hypercube.indices.data(), static_cast<size_t>(bufferSize));
+    memcpy(data, hypericosa.indices.data(), static_cast<size_t>(bufferSize));
     vkUnmapMemory(device, stagingBufferMemory);
 
     createBuffer(
@@ -1534,7 +1542,7 @@ private:
                             0, nullptr);
 
     vkCmdDrawIndexed(commandBuffer,
-                     static_cast<uint32_t>(hypercube.indices.size()), 1, 0, 0,
+                     static_cast<uint32_t>(hypericosa.indices.size()), 1, 0, 0,
                      0);
 
     vkCmdEndRenderPass(commandBuffer);

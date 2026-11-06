@@ -18,23 +18,27 @@ layout(location = 3) in float fragW;
 layout(location = 0) out vec4 outColor;
 
 void main() {
-    // Distance from the nearest [0, 1] boundary along each of the 3 texture axes
-    vec3 distToEdge = min(fragTexCoord, 1.0 - fragTexCoord);
+    // Barycentric coordinates of the tetrahedral cell in [0, 1]^3 texture space:
+    //   T0 = (0.5, 1.0, 0.5), T1 = (1.0, 0.0, 0.0), T2 = (0.0, 0.0, 0.0), T3 = (0.5, 0.0, 1.0)
+    float l0 = fragTexCoord.y;
+    float l3 = fragTexCoord.z - 0.5 * fragTexCoord.y;
+    float l1 = fragTexCoord.x - 0.5 * fragTexCoord.y - 0.5 * l3;
+    float l2 = 1.0 - l0 - l1 - l3;
 
-    // Sort distances: dMin is ~0 on the face itself, dMid is distance to nearest square edge
-    float dMin = min(distToEdge.x, min(distToEdge.y, distToEdge.z));
-    float dMax = max(distToEdge.x, max(distToEdge.y, distToEdge.z));
-    float dMid = (distToEdge.x + distToEdge.y + distToEdge.z) - dMin - dMax;
+    vec4 b = abs(vec4(l0, l1, l2, l3));
 
-    // In windowed mode (params.y < 0.5), cut out central window openings so inner 4D cells are visible
-    if (ubo.params.y < 0.5) {
-        bool onOuterFrame = (dMid < 0.14);
-        bool onCrossRib   = (abs(fragTexCoord.x - 0.5) < 0.045 ||
-                             abs(fragTexCoord.y - 0.5) < 0.045 ||
-                             abs(fragTexCoord.z - 0.5) < 0.045);
-        if (!onOuterFrame && !onCrossRib) {
-            discard;
-        }
+    // Find the two smallest barycentric distances:
+    // bMin is ~0 on the triangular face itself; bSecondMin is the distance to the nearest triangle edge
+    float bMin = min(min(b.x, b.y), min(b.z, b.w));
+    float bSecondMin = 1.0;
+    if (b.x == bMin) {
+        bSecondMin = min(b.y, min(b.z, b.w));
+    } else if (b.y == bMin) {
+        bSecondMin = min(b.x, min(b.z, b.w));
+    } else if (b.z == bMin) {
+        bSecondMin = min(b.x, min(b.y, b.w));
+    } else {
+        bSecondMin = min(b.x, min(b.y, b.z));
     }
 
     // Sample the 3D texture using the 3D (u, v, w) texture coordinates
@@ -45,11 +49,13 @@ void main() {
     float ndotl = 0.55 + 0.45 * abs(dot(normalize(fragNormal4D), lightDir4D));
     float wShade = clamp(0.75 + 0.25 * fragW, 0.45, 1.15);
 
-    // Highlight cell edges
-    float edgeGlow = smoothstep(0.06, 0.0, dMid);
+    // Highlight tetrahedral cell edges and blend all faces/indices with alpha
+    float edgeGlow = smoothstep(0.08, 0.0, bSecondMin);
     vec3 baseRgb = fragColor.rgb * (0.35 + 0.65 * tex3D.rgb) * ndotl * wShade;
     vec3 finalRgb = mix(baseRgb, vec3(1.0), edgeGlow * 0.65);
 
-    outColor = vec4(finalRgb, 1.0);
-}
+    float baseAlpha = (ubo.params.y > 0.5) ? 0.35 : 0.10;
+    float alpha = mix(baseAlpha * fragColor.a * 4.0, 0.65, edgeGlow);
 
+    outColor = vec4(finalRgb, clamp(alpha, 0.05, 0.85));
+}

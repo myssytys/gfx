@@ -27,6 +27,10 @@
 #include "Deca.h"
 #include "EconomyManager.h"
 #include "Hypercube.h"
+#include "Hyperdeca.h"
+#include "Hypericosa.h"
+#include "Hyperocta.h"
+#include "Hypertetra.h"
 #include "Icosa.h"
 #include "Octa.h"
 #include "Sphere.h"
@@ -51,6 +55,10 @@ Octa octa = Octa(1.0f);
 Deca deca = Deca(1.0f);
 Icosa icosa = Icosa(1.0f);
 Hypercube hypercube = Hypercube(1.0f);
+Hypertetra hypertetra = Hypertetra(1.0f);
+Hyperocta hyperocta = Hyperocta(1.0f);
+Hyperdeca hyperdeca = Hyperdeca(1.0f);
+Hypericosa hypericosa = Hypericosa(1.0f);
 
 // Hexagonal Strategy Planet Configuration
 const int TARGET_PLANET_HEXAGONS = 250;
