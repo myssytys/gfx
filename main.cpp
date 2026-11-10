@@ -33,6 +33,7 @@
 #include "Hypertetra.h"
 #include "Icosa.h"
 #include "Octa.h"
+#include "Penteract.h"
 #include "Sphere.h"
 #include "Tetra.h"
 #include "UnitManager.h"
@@ -59,6 +60,7 @@ Hypertetra hypertetra = Hypertetra(1.0f);
 Hyperocta hyperocta = Hyperocta(1.0f);
 Hyperdeca hyperdeca = Hyperdeca(1.0f);
 Hypericosa hypericosa = Hypericosa(1.0f);
+Penteract penteract = Penteract(1.0f);
 
 // Hexagonal Strategy Planet Configuration
 const int TARGET_PLANET_HEXAGONS = 250;

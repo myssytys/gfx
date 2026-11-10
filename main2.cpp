@@ -22,7 +22,7 @@
 #include <stdexcept>
 #include <vector>
 
-#include "Hypericosa.h"
+#include "Penteract.h"
 
 const uint32_t WIDTH = 1024;
 const uint32_t HEIGHT = 768;
@@ -35,7 +35,7 @@ const std::vector<const char *> validationLayers = {
 const std::vector<const char *> deviceExtensions = {
     VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 
-Hypericosa hypericosa = Hypericosa(1.0f, 16);
+Penteract penteract = Penteract(1.0f, 16);
 
 #ifdef NDEBUG
 const bool enableValidationLayers = false;
@@ -81,38 +81,43 @@ struct SwapChainSupportDetails {
   std::vector<VkPresentModeKHR> presentModes;
 };
 
-struct HypericosaVertexInput {
+struct PenteractVertexInput {
   static VkVertexInputBindingDescription getBindingDescription() {
     VkVertexInputBindingDescription bindingDescription{};
     bindingDescription.binding = 0;
-    bindingDescription.stride = sizeof(Hypericosa::Vertex);
+    bindingDescription.stride = sizeof(Penteract::Vertex);
     bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
     return bindingDescription;
   }
 
-  static std::array<VkVertexInputAttributeDescription, 4>
+  static std::array<VkVertexInputAttributeDescription, 5>
   getAttributeDescriptions() {
-    std::array<VkVertexInputAttributeDescription, 4> attributeDescriptions{};
+    std::array<VkVertexInputAttributeDescription, 5> attributeDescriptions{};
 
     attributeDescriptions[0].binding = 0;
     attributeDescriptions[0].location = 0;
     attributeDescriptions[0].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-    attributeDescriptions[0].offset = offsetof(Hypericosa::Vertex, pos);
+    attributeDescriptions[0].offset = offsetof(Penteract::Vertex, pos);
 
     attributeDescriptions[1].binding = 0;
     attributeDescriptions[1].location = 1;
     attributeDescriptions[1].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-    attributeDescriptions[1].offset = offsetof(Hypericosa::Vertex, normals);
+    attributeDescriptions[1].offset = offsetof(Penteract::Vertex, normals);
 
     attributeDescriptions[2].binding = 0;
     attributeDescriptions[2].location = 2;
     attributeDescriptions[2].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-    attributeDescriptions[2].offset = offsetof(Hypericosa::Vertex, colors);
+    attributeDescriptions[2].offset = offsetof(Penteract::Vertex, colors);
 
     attributeDescriptions[3].binding = 0;
     attributeDescriptions[3].location = 3;
     attributeDescriptions[3].format = VK_FORMAT_R32G32B32_SFLOAT;
-    attributeDescriptions[3].offset = offsetof(Hypericosa::Vertex, texCoords);
+    attributeDescriptions[3].offset = offsetof(Penteract::Vertex, texCoords);
+
+    attributeDescriptions[4].binding = 0;
+    attributeDescriptions[4].location = 4;
+    attributeDescriptions[4].format = VK_FORMAT_R32G32_SFLOAT;
+    attributeDescriptions[4].offset = offsetof(Penteract::Vertex, fifthDim);
 
     return attributeDescriptions;
   }
@@ -123,7 +128,8 @@ struct UniformBufferObject {
   alignas(16) glm::mat4 model;
   alignas(16) glm::mat4 view;
   alignas(16) glm::mat4 proj;
-  alignas(16) glm::vec4 params; // x = viewerW, y = solidMode, z = time, w = 0
+  alignas(16) glm::vec4 params;   // x = viewerW, y = solidMode, z = time, w = viewerV
+  alignas(16) glm::vec4 angles5D; // x = angleXV, y = angleYV, z = angleZV, w = angleWV
 };
 
 // Construct 4D planar rotation matrices (column-major glm::mat4)
@@ -241,11 +247,16 @@ private:
   // Spin / camera controls
   bool autoSpin = true;
   bool solidFaces = false;
-  float viewerW = 3.0f;
+  float viewerW = 3.2f;
+  float viewerV = 3.2f;
 
   float angleXW = 0.0f;
   float angleYW = 0.0f;
   float angleZW = 0.0f;
+  float angleXV = 0.0f;
+  float angleYV = 0.0f;
+  float angleZV = 0.0f;
+  float angleWV = 0.0f;
   float angle3DY = 0.0f;
   float angle3DX = 0.35f;
 
@@ -259,8 +270,8 @@ private:
       return;
     char title[256];
     snprintf(title, sizeof(title),
-             "4D Hypericosahedron (600-Cell) + 3D Texture | Spin: %s [Space] | "
-             "Faces: %s [F] | [L-Drag] 3D Rot | [R-Drag] 4D Rot | [R] Reset",
+             "5D Penteract (5-Cube) -> 4D -> 3D + 3D Texture | Spin: %s [Space] | "
+             "Faces: %s [F] | [L-Drag] 3D | [R-Drag] 4D/5D | [R] Reset",
              autoSpin ? "ON" : "PAUSED",
              solidFaces ? "SOLID" : "WINDOWED");
     glfwSetWindowTitle(window, title);
@@ -271,7 +282,7 @@ private:
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
-    window = glfwCreateWindow(WIDTH, HEIGHT, "4D Hypericosahedron + 3D Texture",
+    window = glfwCreateWindow(WIDTH, HEIGHT, "5D Penteract (5-Cube) + 3D Texture",
                               nullptr, nullptr);
     glfwSetWindowUserPointer(window, this);
     glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
@@ -282,16 +293,17 @@ private:
 
     std::cout << "\n==========================================================="
                  "========\n";
-    std::cout << "  4D HYPERICOSAHEDRON (600-CELL) WITH 3D TEXTURE ("
-              << hypericosa.texWidth << "x" << hypericosa.texHeight << "x"
-              << hypericosa.texDepth << ")\n";
-    std::cout << "  - 600 Tetrahedral 3-Faces (2400 4D Vertices, 7200 Triangle Indices)\n";
+    std::cout << "  5D HYPERCUBE (PENTERACT) PROJECTED TO 3D WITH 3D TEXTURE ("
+              << penteract.texWidth << "x" << penteract.texHeight << "x"
+              << penteract.texDepth << ")\n";
+    std::cout << "  - 40 Cubic 3-Faces (320 5D Vertices, 1440 Triangle Indices)\n";
+    std::cout << "  - Perspective Projection: 5D (XYZWV) -> 4D (XYZW) -> 3D (XYZ)\n";
     std::cout << "  - Controls:\n";
-    std::cout << "      [Space]      Pause / Resume 4D + 3D rotation\n";
+    std::cout << "      [Space]      Pause / Resume 5D + 4D + 3D rotation\n";
     std::cout << "      [F]          Toggle Windowed vs Solid 3D-textured faces\n";
-    std::cout << "      [R]          Reset 3D and 4D rotation angles\n";
+    std::cout << "      [R]          Reset 3D, 4D, and 5D rotation angles\n";
     std::cout << "      [Left Drag]  Rotate in 3D (Pitch / Yaw)\n";
-    std::cout << "      [Right Drag] Rotate in 4D (XW / YW planes)\n";
+    std::cout << "      [Right Drag] Rotate in 4D & 5D (XW / YW / XV / YV planes)\n";
     std::cout << "============================================================="
                  "======\n\n";
   }
@@ -337,6 +349,8 @@ private:
       if (app->isRightDragging) {
         app->angleXW += static_cast<float>(dx) * 0.008f;
         app->angleYW += static_cast<float>(dy) * 0.008f;
+        app->angleXV += static_cast<float>(dx) * 0.006f;
+        app->angleYV += static_cast<float>(dy) * 0.006f;
       }
       app->lastMouseX = xpos;
       app->lastMouseY = ypos;
@@ -360,6 +374,10 @@ private:
       app->angleXW = 0.0f;
       app->angleYW = 0.0f;
       app->angleZW = 0.0f;
+      app->angleXV = 0.0f;
+      app->angleYV = 0.0f;
+      app->angleZV = 0.0f;
+      app->angleWV = 0.0f;
       app->angle3DY = 0.0f;
       app->angle3DX = 0.35f;
     } else if (key == GLFW_KEY_ESCAPE) {
@@ -816,9 +834,9 @@ private:
     vertexInputInfo.sType =
         VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 
-    auto bindingDescription = HypericosaVertexInput::getBindingDescription();
+    auto bindingDescription = PenteractVertexInput::getBindingDescription();
     auto attributeDescriptions =
-        HypericosaVertexInput::getAttributeDescriptions();
+        PenteractVertexInput::getAttributeDescriptions();
 
     vertexInputInfo.vertexBindingDescriptionCount = 1;
     vertexInputInfo.vertexAttributeDescriptionCount =
@@ -967,9 +985,9 @@ private:
   }
 
   void createTextureImage3D() {
-    uint32_t w = hypericosa.texWidth;
-    uint32_t h = hypericosa.texHeight;
-    uint32_t d = hypericosa.texDepth;
+    uint32_t w = penteract.texWidth;
+    uint32_t h = penteract.texHeight;
+    uint32_t d = penteract.texDepth;
     VkDeviceSize imageSize = static_cast<VkDeviceSize>(w) * h * d * 4;
 
     VkBuffer stagingBuffer;
@@ -981,7 +999,7 @@ private:
 
     void *data;
     vkMapMemory(device, stagingBufferMemory, 0, imageSize, 0, &data);
-    memcpy(data, hypericosa.textureData3D.data(), static_cast<size_t>(imageSize));
+    memcpy(data, penteract.textureData3D.data(), static_cast<size_t>(imageSize));
     vkUnmapMemory(device, stagingBufferMemory);
 
     createImage3D(w, h, d, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL,
@@ -1246,7 +1264,7 @@ private:
 
   void createVertexBuffer() {
     VkDeviceSize bufferSize =
-        sizeof(hypericosa.Data[0]) * hypericosa.Data.size();
+        sizeof(penteract.Data[0]) * penteract.Data.size();
 
     VkBuffer stagingBuffer;
     VkDeviceMemory stagingBufferMemory;
@@ -1257,7 +1275,7 @@ private:
 
     void *data;
     vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
-    memcpy(data, hypericosa.Data.data(), static_cast<size_t>(bufferSize));
+    memcpy(data, penteract.Data.data(), static_cast<size_t>(bufferSize));
     vkUnmapMemory(device, stagingBufferMemory);
 
     createBuffer(
@@ -1273,7 +1291,7 @@ private:
 
   void createIndexBuffer() {
     VkDeviceSize bufferSize =
-        sizeof(hypericosa.indices[0]) * hypericosa.indices.size();
+        sizeof(penteract.indices[0]) * penteract.indices.size();
 
     VkBuffer stagingBuffer;
     VkDeviceMemory stagingBufferMemory;
@@ -1284,7 +1302,7 @@ private:
 
     void *data;
     vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
-    memcpy(data, hypericosa.indices.data(), static_cast<size_t>(bufferSize));
+    memcpy(data, penteract.indices.data(), static_cast<size_t>(bufferSize));
     vkUnmapMemory(device, stagingBufferMemory);
 
     createBuffer(
@@ -1542,7 +1560,7 @@ private:
                             0, nullptr);
 
     vkCmdDrawIndexed(commandBuffer,
-                     static_cast<uint32_t>(hypericosa.indices.size()), 1, 0, 0,
+                     static_cast<uint32_t>(penteract.indices.size()), 1, 0, 0,
                      0);
 
     vkCmdEndRenderPass(commandBuffer);
@@ -1590,10 +1608,14 @@ private:
     lastTime = currentTime;
 
     if (autoSpin) {
-      angleXW += dt * 0.75f;
-      angleYW += dt * 0.45f;
-      angleZW += dt * 0.30f;
-      angle3DY += dt * 0.50f;
+      angleXW += dt * 0.55f;
+      angleYW += dt * 0.38f;
+      angleZW += dt * 0.25f;
+      angleXV += dt * 0.48f;
+      angleYV += dt * 0.33f;
+      angleZV += dt * 0.22f;
+      angleWV += dt * 0.62f;
+      angle3DY += dt * 0.42f;
     }
 
     UniformBufferObject ubo{};
@@ -1606,7 +1628,7 @@ private:
     ubo.model = model;
 
     ubo.view =
-        glm::lookAt(glm::vec3(0.0f, 1.4f, 4.2f), glm::vec3(0.0f, 0.0f, 0.0f),
+        glm::lookAt(glm::vec3(0.0f, 1.5f, 4.6f), glm::vec3(0.0f, 0.0f, 0.0f),
                     glm::vec3(0.0f, 1.0f, 0.0f));
     ubo.proj = glm::perspective(
         glm::radians(45.0f),
@@ -1614,7 +1636,9 @@ private:
     ubo.proj[1][1] *= -1;
 
     ubo.params =
-        glm::vec4(viewerW, solidFaces ? 1.0f : 0.0f, elapsed, 0.0f);
+        glm::vec4(viewerW, solidFaces ? 1.0f : 0.0f, elapsed, viewerV);
+    ubo.angles5D =
+        glm::vec4(angleXV, angleYV, angleZV, angleWV);
 
     memcpy(uniformBuffersMapped[currentImage], &ubo, sizeof(ubo));
   }
